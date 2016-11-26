@@ -8,7 +8,7 @@ import (
 	"strings"
 	"encoding/json"
 	"github.com/hokaccha/go-prettyjson"
-	"github.com/elgs/jsonql"
+	//"/github.com/elgs/jsonql"
 	//"github.com/elgs/gojq"
 	"bytes"
 	"errors"
@@ -19,6 +19,7 @@ type Options struct {
 	Method string
 	Resource string
 	Color bool
+	Unformatted bool
 	Query string
 }
 
@@ -31,18 +32,12 @@ func createBoxRequest(opt *Options) (*http.Request, error) {
 	}
 
 	req, err := http.NewRequest(strings.ToUpper(opt.Method),
-		PROTOCOL + "://" + opt.Address + "/fhir/" + opt.Resource, nil)
+		PROTOCOL + "://" + opt.Address + "/fhir/" + opt.Resource + "?_count=" + MAX_RESOURCES, nil)
 
-	q := req.URL.Query()
-	q.Add("_count", MAX_RESOURCES)
-	req.URL.RawQuery = q.Encode()
-
-	if err != nil {
-		return nil, err
+	if err == nil {
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Accepts", "application/json")
 	}
-
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Accepts", "application/json")
 
 	return req, nil
 }
@@ -51,15 +46,16 @@ func executeRequest(req *http.Request) ([]byte, error) {
 	var err error
 	var resp *http.Response
 	var client = &http.Client{}
+	var jsonb []byte
 
 	resp, err = client.Do(req)
 
-	if err != nil {
-		return nil, err
+	if err == nil {
+		defer resp.Body.Close()
+		jsonb, err = ioutil.ReadAll(resp.Body)
 	}
 
-	defer resp.Body.Close()
-	return ioutil.ReadAll(resp.Body)
+	return jsonb, err
 }
 
 func doRequest(opt *Options) (string, error) {
@@ -69,28 +65,23 @@ func doRequest(opt *Options) (string, error) {
 
 	req, err = createBoxRequest(opt)
 
-	if err != nil {
-		return "", err
-	}
-
-	jsonb, err = executeRequest(req)
-
-	if err != nil {
-		return "", err
+	if err == nil {
+		jsonb, err = executeRequest(req)
 	}
 
 	return string(jsonb), err
 }
 
-func formatJsonMono(jsonString string /*jsonb []byte*/) (string, error) {
+func formatJsonMono(jsonString string) (string, error) {
+	var formatted string
 	var byteBuf bytes.Buffer
 	err := json.Indent(&byteBuf, []byte(jsonString), "", "  ")
 
-	if err != nil {
-		return "", err
+	if err == nil {
+		formatted = byteBuf.String()
 	}
 
-	return byteBuf.String(), nil
+	return formatted, err
 }
 
 func formatJsonColor(jsonString string) (string, error) {
@@ -105,10 +96,14 @@ func formatJson(jsonString string, opt *Options) (string, error) {
 	var js string
 	var err error
 
-	if(opt.Color) {
-		js, err = formatJsonColor(jsonString)
+	if opt.Unformatted {
+		js = jsonString
 	} else {
-		js, err = formatJsonMono(jsonString)
+		if (opt.Color) {
+			js, err = formatJsonColor(jsonString)
+		} else {
+			js, err = formatJsonMono(jsonString)
+		}
 	}
 
 	return js, err
@@ -117,7 +112,7 @@ func formatJson(jsonString string, opt *Options) (string, error) {
 func applyJsonQuery(jsonString string, opt *Options) (string, error) {
 	var err error
 	var result string
-
+/*
 	if len(opt.Query) > 0 {
 		parser, err := jsonql.NewStringQuery(jsonString)
 
@@ -132,9 +127,9 @@ func applyJsonQuery(jsonString string, opt *Options) (string, error) {
 				}
 			}
 		}
-	} else {
+	} else {*/
 		result = jsonString
-	}
+	//}
 
 	return result, err
 }
@@ -152,7 +147,9 @@ func processArg(arg string, opt *Options) {
 		arg := string(arg[c])
 
 		if arg == "M" {
-			opt.Color = false;
+			opt.Color = false
+		} else if arg == "u" {
+			opt.Unformatted = true
 		}
 	}
 }
@@ -171,10 +168,11 @@ func processArgs(args []string, opt *Options) {
 func getOptions(args []string) (*Options, error) {
 	opt := new(Options);
 	opt.Color = true;
-	opt.Address = os.Getenv("BOX_ENV")
+	opt.Unformatted = false;
+	opt.Address = os.Getenv("BOXENV")
 
 	if opt.Address == "" {
-		return nil, errors.New("BOX_ENV not set")
+		return nil, errors.New("BOXENV not set")
 	}
 
 	if len(args) >= 3 {
