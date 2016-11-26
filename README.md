@@ -1,0 +1,2 @@
+# boxcli
+CLI for Aidbox
