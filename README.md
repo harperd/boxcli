@@ -6,7 +6,7 @@ Command line interface for Aidbox and FHIR.
 BoxCLI provides a wrapper for [JQ](https://stedolan.github.io/jq/) to allow filtering of JSON results.
 Before building BoxCLI, you will need to install [JQ](https://stedolan.github.io/jq/) first.
 
-After installing [JQ](https://stedolan.github.io/jq/) perform the following to build BoxCLI.
+After installing [JQ](https://stedolan.github.io/jq/) perform the following to build BoxCLI:
 
 ```$xslt
 $ go build -o box
