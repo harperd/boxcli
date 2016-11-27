@@ -13,6 +13,7 @@ $ go build -o box
 box [get|put|post|delete] [resource] [options] \<JQ query\>
 
 Options:
+
 	-M	monochrome (don't colorize JSON)
 	-u	unformatted output
 	-c	get the count of the query results only
