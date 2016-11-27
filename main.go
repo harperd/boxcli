@@ -5,7 +5,7 @@ import (
 	"os"
 	"errors"
 	"strings"
-	"./boxclient"
+	"github.com/harperd/boxcli/boxclient"
 )
 
 func showHelp() {
