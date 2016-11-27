@@ -4,6 +4,7 @@ import (
 	"github.com/jingweno/jqpipe-go"
 	"encoding/json"
 	"bytes"
+	"strings"
 )
 
 func ApplyJsonQuery(s string, opt *Options) (string, error) {
@@ -11,23 +12,40 @@ func ApplyJsonQuery(s string, opt *Options) (string, error) {
 	var err error
 
 	if opt.Query != "" {
-		q := opt.Query
-
-		if isBundle(s) {
-			q = ".entry[].resource|" + opt.Query
-		}
-
-		seq, err := jq.Eval(s, q)
+		seq, err := jq.Eval(s, compileQuery(s, opt))
 
 		if err == nil {
-			if len(seq) > 1 {
-				result, err = toArray(seq, opt)
-			} else {
-				result, err = FormatJson(string(seq[0]), opt)
-			}
+			result, err = formatOutput(seq, opt)
 		}
 	} else {
 		result, err = FormatJson(s, opt)
+	}
+
+	return result, err
+}
+
+func compileQuery(s string, opt *Options) string {
+	q := opt.Query
+
+	if isBundle(s) {
+		q = ".entry[].resource|" + opt.Query
+	}
+
+	return q
+}
+
+func formatOutput(seq []json.RawMessage, opt *Options) (string, error) {
+	var result string
+	var err error
+
+	if len(seq) > 1 {
+		if stringValues(seq) {
+			result, err = toSimpleList(seq, opt)
+		} else {
+			result, err = toJsonArray(seq, opt)
+		}
+	} else {
+		result, err = FormatJson(string(seq[0]), opt)
 	}
 
 	return result, err
@@ -44,7 +62,33 @@ func isBundle(s string) bool {
 	return bundle
 }
 
-func toArray(seq []json.RawMessage, opt *Options) (string, error) {
+func stringValues(seq []json.RawMessage) bool {
+	return strings.Index(string(seq[0]), "\"") == 0
+}
+
+func addValue(s string, opt *Options) bool {
+	return !opt.OmitNulls || (opt.OmitNulls && s != "null")
+}
+
+func toSimpleList(seq []json.RawMessage, opt *Options) (string, error) {
+	var err error
+	var buf bytes.Buffer
+
+	for i := 0; i < len(seq); i++ {
+		s := string(seq[i])
+
+		if addValue(s, opt) {
+			if i < len(seq) - 1 {
+				buf.WriteString(s)
+				buf.WriteString("\n")
+			}
+		}
+	}
+
+	return buf.String(), err
+}
+
+func toJsonArray(seq []json.RawMessage, opt *Options) (string, error) {
 	var err error
 	var s string
 	var buf bytes.Buffer
@@ -52,19 +96,19 @@ func toArray(seq []json.RawMessage, opt *Options) (string, error) {
 	buf.WriteString("[\n")
 
 	for i := 0; i < len(seq); i++ {
-		if err == nil {
-			if !opt.OmitNulls || (opt.OmitNulls && string(seq[i]) != "null") {
-				s, err = FormatJson(string(seq[i]), opt)
+		s = string(seq[i])
 
-				if err == nil {
-					buf.WriteString(s)
+		if addValue(s, opt) {
+			s, err = FormatJson(s, opt)
 
-					if i < len(seq) - 1 {
-						buf.WriteString(",")
-					}
+			if err == nil {
+				buf.WriteString(s)
 
-					buf.WriteString("\n")
+				if i < len(seq) - 1 {
+					buf.WriteString(",")
 				}
+
+				buf.WriteString("\n")
 			}
 		}
 	}
