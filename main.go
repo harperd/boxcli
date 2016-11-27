@@ -7,6 +7,7 @@ import (
 	"github.com/harperd/boxcli/boxclient"
 )
 
+
 func showHelp() {
 	fmt.Println("Usage: box [get|put|post|delete] [resource] [options] <jq filter>")
 	fmt.Println()
@@ -18,6 +19,8 @@ func showHelp() {
 	os.Exit(0)
 }
 
+// Processes all command line arguments. A command line argument is proceeded
+// by a dash ('-'). Acceptable arguments can be -Mcu or -M -c -u individually.
 func processArg(arg string, opt *boxclient.Options) {
 	if strings.Index(arg, "-i:") > -1 {
 		opt.Index = strings.Split(arg, ":")[1]
@@ -36,6 +39,10 @@ func processArg(arg string, opt *boxclient.Options) {
 	}
 }
 
+// Processes all command line arguments. A command line argument is proceeded
+// by a dash ('-'). Any argument that is not proceeded by a dash is assumed to
+// be a JQ query. The first two arguments, method and resource, are required and not
+// processed by this function.
 func processArgs(args []string, opt *boxclient.Options) {
 	for c := 0; c < len(args); c++ {
 		arg := args[c]
@@ -49,6 +56,9 @@ func processArgs(args []string, opt *boxclient.Options) {
 	}
 }
 
+// Set the Options structure by processing the provided command line
+// arguments. This structure is used by the boxclient package to process
+// Aidbox requests.
 func getOptions(args []string) (*boxclient.Options, error) {
 	opt := new(boxclient.Options)
 
