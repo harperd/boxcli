@@ -19,17 +19,19 @@ func showHelp() {
 }
 
 func processArg(arg string, opt *boxclient.Options) {
-	for c := 1; c < len(arg); c++ {
-		arg := string(arg[c])
+	if strings.Index(arg, "-i:") > -1 {
+		opt.Index = strings.Split(arg, ":")[1]
+	} else {
+		for c := 1; c < len(arg); c++ {
+			arg := string(arg[c])
 
-		if arg == "M" {
-			opt.Color = false
-		} else if arg == "u" {
-			opt.Unformatted = true
-		} else if arg == "c" {
-			opt.Count = true
-		} else if arg == "i" {
-			opt.Index = strings.Split(arg, ":")[0]
+			if arg == "M" {
+				opt.Color = false
+			} else if arg == "u" {
+				opt.Unformatted = true
+			} else if arg == "c" {
+				opt.Count = true
+			}
 		}
 	}
 }
@@ -40,8 +42,9 @@ func processArgs(args []string, opt *boxclient.Options) {
 		if strings.Index(arg, "-") == 0 {
 			processArg(arg, opt)
 		} else {
-			if len(opt.Query) > 0
-			opt.Query = arg + "|" + opt.Query
+			if len(arg) > 0 {
+				opt.Query = arg
+			}
 		}
 	}
 }

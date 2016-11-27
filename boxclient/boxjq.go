@@ -12,7 +12,7 @@ func ApplyJsonQuery(s string, opt *Options) (string, error) {
 	var result string
 	var err error
 
-	if opt.Query != "" || opt.Count || opt.Index {
+	if doCompile(opt) {
 		seq, err := jq.Eval(s, compileQuery(s, opt))
 
 		if err == nil {
@@ -25,15 +25,25 @@ func ApplyJsonQuery(s string, opt *Options) (string, error) {
 	return result, err
 }
 
+func doCompile(opt *Options) bool {
+	return len(opt.Query) > 0 || opt.Count || len(opt.Index) > 0
+}
+
 func compileQuery(s string, opt *Options) string {
-	q := opt.Query
+	var q string
 
 	if isBundle(s) {
-		q = ".entry[" + opt.Index + "].resource|" + opt.Query
-	}
+		if opt.Count {
+			q = ".entry|length"
+		} else {
+			q = ".entry[" + opt.Index + "].resource"
 
-	if opt.Count && len(q) > 0 {
-		s += "|length"
+			if len(opt.Query) > 0 {
+				q += "|" + opt.Query
+			}
+		}
+	} else {
+		q = opt.Query
 	}
 
 	return q
