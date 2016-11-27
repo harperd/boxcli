@@ -10,7 +10,7 @@ $ go build -o box
 ```
 
 ##Usage
-box [get|put|post|delete] [resource] [options] <jq filter>
+box [get|put|post|delete] [resource] [options] \<JQ query\>
 
 Options:
 	-M	monochrome (don't colorize JSON)
