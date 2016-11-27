@@ -8,31 +8,6 @@ import (
 	"./boxclient"
 )
 
-func applyJsonQuery(jsonString string, opt *boxclient.Options) (string, error) {
-	var err error
-	var result string
-/*
-	if len(opt.Query) > 0 {
-		parser, err := jsonql.NewStringQuery(jsonString)
-
-		if err == nil {
-			s, err := parser.Query(opt.Query)
-
-			if err == nil {
-				bytes, err := json.Marshal(s)
-
-				if err == nil {
-					result = string(bytes)
-				}
-			}
-		}
-	} else {*/
-		result = jsonString
-	//}
-
-	return result, err
-}
-
 func showHelp() {
 	fmt.Println("Usage: box [GET] [Resource] [Options]")
 	fmt.Println()
@@ -99,7 +74,7 @@ func main() {
 
 		if err == nil {
 			if len(opt.Query) > 0 {
-				s, err = applyJsonQuery(s, opt)
+				s, err = boxclient.ApplyJsonQuery(s, opt)
 			}
 
 			if err == nil {

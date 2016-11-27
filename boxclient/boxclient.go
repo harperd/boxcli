@@ -7,15 +7,6 @@ import (
 	"errors"
 )
 
-type Options struct {
-	Address string
-	Method string
-	Resource string
-	Color bool
-	Unformatted bool
-	Query string
-}
-
 const MAX_RESOURCES string = "999999999"
 const PROTOCOL string = "http"
 
