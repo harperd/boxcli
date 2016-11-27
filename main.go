@@ -8,10 +8,11 @@ import (
 )
 
 func showHelp() {
-	fmt.Println("Usage: box [GET] [Resource] [Options]")
+	fmt.Println("Usage: box [get|put|post|delete] [resource] [options] <jq filter>")
 	fmt.Println()
 	fmt.Println("Options:")
 	fmt.Println("\t-M\tmonochrome (don't colorize JSON)")
+	fmt.Println("\t-u\tunformatted output")
 	os.Exit(0)
 }
 

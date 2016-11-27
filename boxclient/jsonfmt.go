@@ -29,17 +29,14 @@ func FormatJson(jsonString string, opt *Options) (string, error) {
 
 	if opt.Unformatted {
 		js = jsonString
+	} else if opt.Color {
+		js, err = formatJsonColor(jsonString)
 	} else {
-		if (opt.Color) {
-			js, err = formatJsonColor(jsonString)
-		} else {
-			js, err = formatJsonMono(jsonString)
-		}
+		js, err = formatJsonMono(jsonString)
 	}
 
 	return js, err
 }
-
 
 func formatJsonMono(jsonString string) (string, error) {
 	var formatted string
