@@ -9,7 +9,6 @@ import (
 )
 
 const MAX_RESOURCES string = "999999999"
-const PROTOCOL string = "http"
 
 func Execute(opt *Options) (string, error) {
 	var err error
@@ -26,16 +25,15 @@ func Execute(opt *Options) (string, error) {
 }
 
 func createBoxRequest(opt *Options) (*http.Request, error) {
-	var boxEnv = os.Getenv("BOXENV")
+	var url = os.Getenv("BOXURL")
 
-	if len(boxEnv) == 0 {
-		return nil, errors.New("BOXENV not set")
+	if len(url) == 0 {
+		return nil, errors.New("BOXURL not set")
 	}
 
 	var method = strings.ToUpper(opt.Method)
 
-	req, err := http.NewRequest(method,
-		PROTOCOL + "://" + boxEnv + "/fhir/" + opt.Resource + "?_count=" + MAX_RESOURCES, nil)
+	req, err := http.NewRequest(method, url + "/fhir/" + opt.Resource + "?_count=" + MAX_RESOURCES, nil)
 
 	if err == nil {
 		req.Header.Add("Content-Type", "application/json")
