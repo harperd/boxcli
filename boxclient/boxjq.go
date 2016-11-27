@@ -3,6 +3,7 @@ package boxclient
 import (
 	"github.com/jingweno/jqpipe-go"
 	"encoding/json"
+	"bytes"
 )
 
 func ApplyJsonQuery(s string, opt *Options) (string, error) {
@@ -29,25 +30,27 @@ func ApplyJsonQuery(s string, opt *Options) (string, error) {
 func toArray(seq []json.RawMessage, opt *Options) (string, error) {
 	var err error
 	var s string
-	result := "[\n"
+	var buf bytes.Buffer();
+
+	buf.WriteString("[\n")
 
 	for i := 0; i < len(seq); i++ {
 		if err == nil {
 			s, err = FormatJson(string(seq[i]), opt)
 
 			if err == nil {
-				result += s
+				buf.WriteString(s)
 
 				if i < len(seq) - 1 {
-					result += ","
+					buf.WriteString(",")
 				}
 
-				result += "\n"
+				buf.WriteString("\n")
 			}
 		}
 	}
 
-	result += "]"
+	buf.WriteString("]\n")
 
-	return result, err
+	return buf.String(), err
 }
