@@ -1,7 +1,5 @@
 # BoxCLI
-CLI for Aidbox
-
-Access Aidbox and FHIR resources from the command line.
+Command line interface for Aidbox and FHIR.
 
 ##Build
 
