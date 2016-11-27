@@ -13,6 +13,8 @@ func showHelp() {
 	fmt.Println("Options:")
 	fmt.Println("\t-M\tmonochrome (don't colorize JSON)")
 	fmt.Println("\t-u\tunformatted output")
+	fmt.Println("\t-c\tget the count of the query results only")
+	fmt.Println("\t-i:n\tget the resourced at index n")
 	os.Exit(0)
 }
 
@@ -24,6 +26,10 @@ func processArg(arg string, opt *boxclient.Options) {
 			opt.Color = false
 		} else if arg == "u" {
 			opt.Unformatted = true
+		} else if arg == "c" {
+			opt.Count = true
+		} else if arg == "i" {
+			opt.Index = strings.Split(arg, ":")[0]
 		}
 	}
 }
@@ -34,16 +40,21 @@ func processArgs(args []string, opt *boxclient.Options) {
 		if strings.Index(arg, "-") == 0 {
 			processArg(arg, opt)
 		} else {
-			opt.Query = arg
+			if len(opt.Query) > 0
+			opt.Query = arg + "|" + opt.Query
 		}
 	}
 }
 
 func getOptions(args []string) (*boxclient.Options, error) {
 	opt := new(boxclient.Options)
+
+	// -- Option defaults
 	opt.Color = true
 	opt.Unformatted = false
 	opt.OmitNulls = true
+	opt.Count = false
+	opt.Index = ""
 
 	if len(args) >= 3 {
 		opt.Method = args[1]
