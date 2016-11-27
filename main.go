@@ -40,9 +40,10 @@ func processArgs(args []string, opt *boxclient.Options) {
 }
 
 func getOptions(args []string) (*boxclient.Options, error) {
-	opt := new(boxclient.Options);
-	opt.Color = true;
-	opt.Unformatted = false;
+	opt := new(boxclient.Options)
+	opt.Color = true
+	opt.Unformatted = false
+	opt.OmitNulls = true
 
 	if len(args) >= 3 {
 		opt.Method = args[1]

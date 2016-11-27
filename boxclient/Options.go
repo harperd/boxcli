@@ -12,5 +12,6 @@ type Options struct {
 	Resource string
 	Color bool
 	Unformatted bool
+	OmitNulls bool
 	Query string
 }
