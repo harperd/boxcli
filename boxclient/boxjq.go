@@ -30,7 +30,7 @@ func ApplyJsonQuery(s string, opt *Options) (string, error) {
 func toArray(seq []json.RawMessage, opt *Options) (string, error) {
 	var err error
 	var s string
-	var buf bytes.Buffer();
+	var buf bytes.Buffer
 
 	buf.WriteString("[\n")
 
