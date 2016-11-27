@@ -69,13 +69,7 @@ func main() {
 		s, err = boxclient.Execute(opt)
 
 		if err == nil {
-			if len(opt.Query) > 0 {
-				s, err = boxclient.ApplyJsonQuery(s, opt)
-			}
-
-			if err == nil {
-				s, err = boxclient.FormatJson(s, opt)
-			}
+			s, err = boxclient.ApplyJsonQuery(s, opt)
 		}
 	}
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"bytes"
 	"github.com/hokaccha/go-prettyjson"
+	"strings"
 )
 
 func ToInterface(s string) (interface{}, error) {
@@ -27,7 +28,7 @@ func FormatJson(jsonString string, opt *Options) (string, error) {
 	var js string
 	var err error
 
-	if opt.Unformatted {
+	if opt.Unformatted || strings.Index(jsonString, "{") == -1 {
 		js = jsonString
 	} else if opt.Color {
 		js, err = formatJsonColor(jsonString)
