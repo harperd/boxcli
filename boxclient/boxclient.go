@@ -5,22 +5,44 @@ import (
 	"io/ioutil"
 	"strings"
 	"errors"
+	"os"
 )
 
 const MAX_RESOURCES string = "999999999"
 const PROTOCOL string = "http"
 
-func createBoxRequest(opt *Options) (*http.Request, error) {
-	if len(opt.Address) == 0 {
-		return nil, errors.New("Missing address")
+func Execute(opt *Options) (string, error) {
+	var err error
+	var req *http.Request
+	var jsonb []byte
+
+	req, err = createBoxRequest(opt)
+
+	if err == nil {
+		jsonb, err = executeRequest(req)
 	}
 
-	req, err := http.NewRequest(strings.ToUpper(opt.Method),
-		PROTOCOL + "://" + opt.Address + "/fhir/" + opt.Resource + "?_count=" + MAX_RESOURCES, nil)
+	return string(jsonb), err
+}
+
+func createBoxRequest(opt *Options) (*http.Request, error) {
+	var boxEnv = os.Getenv("BOXENV")
+
+	if len(boxEnv) == 0 {
+		return nil, errors.New("BOXENV not set")
+	}
+
+	var method = strings.ToUpper(opt.Method)
+
+	req, err := http.NewRequest(method,
+		PROTOCOL + "://" + boxEnv + "/fhir/" + opt.Resource + "?_count=" + MAX_RESOURCES, nil)
 
 	if err == nil {
 		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("Accepts", "application/json")
+
+		if method == "POST" || method == "PUT" {
+			req.Header.Add("Accepts", "application/json")
+		}
 	}
 
 	return req, nil
@@ -40,18 +62,4 @@ func executeRequest(req *http.Request) ([]byte, error) {
 	}
 
 	return jsonb, err
-}
-
-func Execute(opt *Options) (string, error) {
-	var err error
-	var req *http.Request
-	var jsonb []byte
-
-	req, err = createBoxRequest(opt)
-
-	if err == nil {
-		jsonb, err = executeRequest(req)
-	}
-
-	return string(jsonb), err
 }

@@ -1,7 +1,6 @@
 package boxclient
 
 // Runtime options for Box Client
-// Address: The HTTP address to the AidBox REST-base services
 // Method: GET, PUT, POST, DELETE, etc.
 // Resource: A valid FHIR resource
 // Color: If true, JSON output is syntax highlighted

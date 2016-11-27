@@ -1,26 +1,18 @@
 package boxclient
 
-func ApplyJsonQuery(jsonString string, opt *Options) (string, error) {
+func ApplyJsonQuery(s string, opt *Options) (string, error) {
+	var result string = s
 	var err error
-	var result string
+
 	/*
-		if len(opt.Query) > 0 {
-			parser, err := jsonql.NewStringQuery(jsonString)
+	if len(opt.Query) > 0 {
+		result, err = jq.Apply(opt.Query, ToInterface(s))
 
-			if err == nil {
-				s, err := parser.Query(opt.Query)
+		if err == nil {
 
-				if err == nil {
-					bytes, err := json.Marshal(s)
-
-					if err == nil {
-						result = string(bytes)
-					}
-				}
-			}
-		} else {*/
-	result = jsonString
-	//}
+		}
+	}
+	*/
 
 	return result, err
 }

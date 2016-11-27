@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"errors"
 	"strings"
 	"github.com/harperd/boxcli/boxclient"
 )
@@ -43,11 +42,6 @@ func getOptions(args []string) (*boxclient.Options, error) {
 	opt := new(boxclient.Options);
 	opt.Color = true;
 	opt.Unformatted = false;
-	opt.Address = os.Getenv("BOXENV")
-
-	if opt.Address == "" {
-		return nil, errors.New("BOXENV not set")
-	}
 
 	if len(args) >= 3 {
 		opt.Method = args[1]
