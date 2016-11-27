@@ -11,9 +11,9 @@ func ApplyJsonQuery(s string, opt *Options) (string, error) {
 	seq, err := jq.Eval(s, opt.Query)
 
 	if err == nil {
-		for i := 0; i < len(seq); i++ {
-			result += string(seq[i])
-		}
+		// for i := 0; i < len(seq); i++ {
+			result = string(seq[0])
+		// }
 	}
 
 	return result, err
