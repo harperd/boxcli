@@ -3,113 +3,12 @@ package main
 import (
 	"fmt"
 	"os"
-	"net/http"
-	"io/ioutil"
-	"strings"
-	"encoding/json"
-	"github.com/hokaccha/go-prettyjson"
-	//"/github.com/elgs/jsonql"
-	//"github.com/elgs/gojq"
-	"bytes"
 	"errors"
+	"strings"
+	"./boxclient"
 )
 
-type Options struct {
-	Address string
-	Method string
-	Resource string
-	Color bool
-	Unformatted bool
-	Query string
-}
-
-const MAX_RESOURCES string = "999999999"
-const PROTOCOL string = "http"
-
-func createBoxRequest(opt *Options) (*http.Request, error) {
-	if len(opt.Address) == 0 {
-		return nil, errors.New("Missing address")
-	}
-
-	req, err := http.NewRequest(strings.ToUpper(opt.Method),
-		PROTOCOL + "://" + opt.Address + "/fhir/" + opt.Resource + "?_count=" + MAX_RESOURCES, nil)
-
-	if err == nil {
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("Accepts", "application/json")
-	}
-
-	return req, nil
-}
-
-func executeRequest(req *http.Request) ([]byte, error) {
-	var err error
-	var resp *http.Response
-	var client = &http.Client{}
-	var jsonb []byte
-
-	resp, err = client.Do(req)
-
-	if err == nil {
-		defer resp.Body.Close()
-		jsonb, err = ioutil.ReadAll(resp.Body)
-	}
-
-	return jsonb, err
-}
-
-func doRequest(opt *Options) (string, error) {
-	var err error
-	var req *http.Request
-	var jsonb []byte
-
-	req, err = createBoxRequest(opt)
-
-	if err == nil {
-		jsonb, err = executeRequest(req)
-	}
-
-	return string(jsonb), err
-}
-
-func formatJsonMono(jsonString string) (string, error) {
-	var formatted string
-	var byteBuf bytes.Buffer
-	err := json.Indent(&byteBuf, []byte(jsonString), "", "  ")
-
-	if err == nil {
-		formatted = byteBuf.String()
-	}
-
-	return formatted, err
-}
-
-func formatJsonColor(jsonString string) (string, error) {
-	var j map[string] interface{}
-	json.Unmarshal([]byte(jsonString), &j)
-	buf, err := prettyjson.Marshal(j)
-	s := string(buf)
-	return s, err
-}
-
-func formatJson(jsonString string, opt *Options) (string, error) {
-	var js string
-	var err error
-
-	if opt.Unformatted {
-		js = jsonString
-	} else {
-		if (opt.Color) {
-			js, err = formatJsonColor(jsonString)
-		} else {
-			js, err = formatJsonMono(jsonString)
-		}
-	}
-
-	return js, err
-}
-
-func applyJsonQuery(jsonString string, opt *Options) (string, error) {
+func applyJsonQuery(jsonString string, opt *boxclient.Options) (string, error) {
 	var err error
 	var result string
 /*
@@ -142,7 +41,7 @@ func showHelp() {
 	os.Exit(0)
 }
 
-func processArg(arg string, opt *Options) {
+func processArg(arg string, opt *boxclient.Options) {
 	for c := 1; c < len(arg); c++ {
 		arg := string(arg[c])
 
@@ -154,7 +53,7 @@ func processArg(arg string, opt *Options) {
 	}
 }
 
-func processArgs(args []string, opt *Options) {
+func processArgs(args []string, opt *boxclient.Options) {
 	for c := 0; c < len(args); c++ {
 		arg := args[c]
 		if strings.Index(arg, "-") == 0 {
@@ -165,8 +64,8 @@ func processArgs(args []string, opt *Options) {
 	}
 }
 
-func getOptions(args []string) (*Options, error) {
-	opt := new(Options);
+func getOptions(args []string) (*boxclient.Options, error) {
+	opt := new(boxclient.Options);
 	opt.Color = true;
 	opt.Unformatted = false;
 	opt.Address = os.Getenv("BOXENV")
@@ -196,7 +95,7 @@ func main() {
 	opt, err := getOptions(os.Args)
 
 	if err == nil {
-		s, err := doRequest(opt)
+		s, err := boxclient.Execute(opt)
 
 		if err == nil {
 			if len(opt.Query) > 0 {
@@ -204,7 +103,7 @@ func main() {
 			}
 
 			if err == nil {
-				s, err = formatJson(s, opt)
+				s, err = boxclient.FormatJson(s, opt)
 			}
 		}
 
