@@ -11,7 +11,13 @@ func ApplyJsonQuery(s string, opt *Options) (string, error) {
 	var err error
 
 	if opt.Query != "" {
-		seq, err := jq.Eval(s, opt.Query)
+		q := opt.Query
+
+		if isBundle(s) {
+			q = ".entry[].resource|" + opt.Query
+		}
+
+		seq, err := jq.Eval(s, q)
 
 		if err == nil {
 			if len(seq) > 1 {
@@ -21,10 +27,21 @@ func ApplyJsonQuery(s string, opt *Options) (string, error) {
 			}
 		}
 	} else {
-		result = s
+		result, err = FormatJson(s, opt)
 	}
 
 	return result, err
+}
+
+func isBundle(s string) bool {
+	var bundle = false
+	seq, _ := jq.Eval(s, "select(.resourceType==\"Bundle\")")
+
+	if len(seq) > 0 {
+		bundle = true
+	}
+
+	return bundle
 }
 
 func toArray(seq []json.RawMessage, opt *Options) (string, error) {
