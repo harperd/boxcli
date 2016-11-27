@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"bytes"
 	"strings"
+	"regexp"
 )
 
 func ApplyJsonQuery(s string, opt *Options) (string, error) {
@@ -32,6 +33,11 @@ func compileQuery(s string, opt *Options) string {
 	}
 
 	return q
+}
+
+func unquote(s string) string {
+	reg := regexp.MustCompile(`"([^"]*)"`)
+	return reg.ReplaceAllString(s, "${1}")
 }
 
 func formatOutput(seq []json.RawMessage, opt *Options) (string, error) {
@@ -79,8 +85,11 @@ func toSimpleList(seq []json.RawMessage, opt *Options) (string, error) {
 
 		if addValue(s, opt) {
 			if i < len(seq) - 1 {
-				buf.WriteString(s)
-				buf.WriteString("\n")
+				buf.WriteString(unquote(s))
+
+				if i < len(seq) - 2 {
+					buf.WriteString("\n")
+				}
 			}
 		}
 	}
@@ -93,7 +102,7 @@ func toJsonArray(seq []json.RawMessage, opt *Options) (string, error) {
 	var s string
 	var buf bytes.Buffer
 
-	buf.WriteString("[\n")
+	buf.WriteString("[")
 
 	for i := 0; i < len(seq); i++ {
 		s = string(seq[i])
@@ -105,15 +114,12 @@ func toJsonArray(seq []json.RawMessage, opt *Options) (string, error) {
 				buf.WriteString(s)
 
 				if i < len(seq) - 1 {
-					buf.WriteString(",")
+					buf.WriteString(",\n")
 				}
-
-				buf.WriteString("\n")
 			}
 		}
 	}
 
-	buf.WriteString("]\n")
-
+	buf.WriteString("]")
 	return buf.String(), err
 }
