@@ -58,13 +58,14 @@ func getOptions(args []string) (*boxclient.Options, error) {
 }
 
 func main() {
-	var result string
 	var err error
+	var opt *boxclient.Options
+	var s string
 
-	opt, err := getOptions(os.Args)
+	opt, err = getOptions(os.Args)
 
 	if err == nil {
-		s, err := boxclient.Execute(opt)
+		s, err = boxclient.Execute(opt)
 
 		if err == nil {
 			if len(opt.Query) > 0 {
@@ -75,15 +76,13 @@ func main() {
 				s, err = boxclient.FormatJson(s, opt)
 			}
 		}
-
-		result = s
 	}
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "{0}", err)
+		fmt.Fprintf(os.Stderr, "%s\n", err)
 	} else {
-		if len(result) > 0 {
-			fmt.Println(result)
+		if len(s) > 0 {
+			fmt.Println(s)
 		}
 	}
 }
