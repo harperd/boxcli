@@ -54,7 +54,7 @@ Do a FHIR based search
 ```$xslt
 $ box get patient?subject=c7f17c3f-414c-4404-bd77-15aaf948ce7c
 ```
-Do a JQ type search (Get patient where last name is Baker)
+Do a JQ type search (Get all patient resources where last name is Baker)
 ```$xslt
 $ box get patient "select(.name[0].family[0]=='Baker')"
 ```
