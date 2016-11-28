@@ -13,6 +13,11 @@ $ cd $GOPATH/src/github.com/harperd/boxcli
 $ go get .
 $ go build -o box
 ```
+##Setup
+To use BoxCLI you will need to set the BOXURL envrionment variable to the URL of your specific Box. It is recommended to add it to your .bashrc, .profile, .bash_profile, etc.
+```$xslt
+export BOXURL=http://yourbox.aidbox.io
+```
 
 ##Usage
 box [get|put|post|delete] [resource] [options] \<JQ query\>
