@@ -39,7 +39,7 @@ func TestFormat(t *testing.T) {
 }
 
 func testSetup() *boxclient.Options {
-	os.Setenv("BOXURL", "http://narus.aidbox.master.narus.aidbox.io")
+	os.Setenv("BOXURL", "http://aidbox.io")
 
 	opt := new(boxclient.Options)
 	opt.Color = true
