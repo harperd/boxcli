@@ -9,6 +9,8 @@ Before building BoxCLI, you will need to install [JQ](https://stedolan.github.io
 After installing [JQ](https://stedolan.github.io/jq/) perform the following to build BoxCLI:
 
 ```$xslt
+$ cd $GOPATH/src/github.com/harperd/boxcli 
+$ go get .
 $ go build -o box
 ```
 
