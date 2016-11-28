@@ -14,7 +14,7 @@ func showHelp() {
 	fmt.Println("\t-M\tmonochrome (don't colorize JSON)")
 	fmt.Println("\t-u\tunformatted output")
 	fmt.Println("\t-c\tget the count of the query results only")
-	fmt.Println("\t-i:n\tget the resourced at index n. Other value for n is 'last'")
+	fmt.Println("\t-i:n\tget the resource at index n. Other value for n is 'last'.")
 	os.Exit(0)
 }
 
