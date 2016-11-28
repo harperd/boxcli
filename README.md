@@ -1,3 +1,5 @@
+![Aidbox](https://aidbox.io/imgs/logo-icon.png)
+
 # BoxCLI
 Command line interface for Aidbox and FHIR.
 
