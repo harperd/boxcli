@@ -6,6 +6,7 @@ import (
 	"strings"
 	"errors"
 	"os"
+	"fmt"
 )
 
 const MAX_RESOURCES string = "999999999"
@@ -25,25 +26,46 @@ func Execute(opt *Options) (string, error) {
 }
 
 func createBoxRequest(opt *Options) (*http.Request, error) {
-	var url = os.Getenv("BOXURL")
-
-	if len(url) == 0 {
-		return nil, errors.New("BOXURL not set")
-	}
-
+	var err error
+	var req *http.Request
 	var method = strings.ToUpper(opt.Method)
 
-	req, err := http.NewRequest(method, url + "/fhir/" + opt.Resource + "?_count=" + MAX_RESOURCES, nil)
+	url, err := getBoxUrl(opt)
 
 	if err == nil {
-		req.Header.Add("Content-Type", "application/json")
+		req, err = http.NewRequest(method, url, nil)
 
-		if method == "POST" || method == "PUT" {
-			req.Header.Add("Accepts", "application/json")
+		if err == nil {
+			req.Header.Add("Content-Type", "application/json")
+
+			if method == "POST" || method == "PUT" {
+				req.Header.Add("Accepts", "application/json")
+			}
 		}
 	}
 
-	return req, nil
+	return req, err
+}
+
+func getBoxUrl(opt *Options) (string, error) {
+	var err error
+	var url = os.Getenv("BOXURL")
+
+	if len(url) == 0 {
+		err = errors.New("BOXURL not set")
+	} else {
+		url = url + "/fhir/" + opt.Resource
+
+		if strings.Index(opt.Resource, "?") >= 0 {
+			url += "&"
+		} else {
+			url += "?"
+		}
+
+		url += "_count=" + MAX_RESOURCES
+	}
+
+	return url, err
 }
 
 func executeRequest(req *http.Request) ([]byte, error) {
