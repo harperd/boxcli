@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"strings"
 	"regexp"
+	"strconv"
 )
 
 func ApplyJsonQuery(s string, opt *Options) (string, error) {
@@ -18,6 +19,13 @@ func ApplyJsonQuery(s string, opt *Options) (string, error) {
 		if err == nil {
 			result, err = formatOutput(seq, opt)
 		}
+	} else if(opt.Count) {
+		var i int = -1
+		i, err = getResourceCount(s)
+
+		if err == nil {
+			result = strconv.Itoa(i)
+		}
 	} else {
 		result, err = FormatJson(s, opt)
 	}
@@ -26,17 +34,17 @@ func ApplyJsonQuery(s string, opt *Options) (string, error) {
 }
 
 func doCompile(opt *Options) bool {
-	return len(opt.Query) > 0 || opt.Count || len(opt.Index) > 0
+	return len(opt.Query) > 0 || len(opt.Index) > 0
 }
 
 func compileQuery(s string, opt *Options) string {
 	var q string
 
 	if isBundle(s) {
-		if opt.Count {
-			q = ".entry|length"
-		} else {
-			q = ".entry[" + opt.Index + "].resource"
+		index, err := getIndex(s, opt)
+
+		if err == nil {
+			q = ".entry[" + index + "].resource"
 
 			if len(opt.Query) > 0 {
 				q += "|" + opt.Query
@@ -47,6 +55,39 @@ func compileQuery(s string, opt *Options) string {
 	}
 
 	return q
+}
+
+func getResourceCount(s string) (int, error) {
+	var count int = -1
+	seq, err := jq.Eval(s, ".entry|length")
+
+	if err == nil {
+		count, err = strconv.Atoi(string(seq[0]))
+	}
+
+	return count, err
+}
+
+func getIndex(s string, opt *Options) (string, error) {
+	var index string = opt.Index
+	var err error
+	var seq []json.RawMessage
+
+	if strings.ToUpper(opt.Index) == "LAST" {
+		seq, err = jq.Eval(s, ".entry|length")
+
+		if err == nil {
+			var i int = -1
+			i, err = strconv.Atoi(string(seq[0]))
+
+			if err == nil && i > 0 {
+				i--
+				index = strconv.Itoa(i)
+			}
+		}
+	}
+
+	return index, err
 }
 
 func unquote(s string) string {
