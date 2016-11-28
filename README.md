@@ -38,7 +38,7 @@ Get the number of Patient resources
 ```$xslt
 $ box get patient -c
 ```
-Get the 5th Patient resources
+Get the 5th Patient resource
 ```$xslt
 $ box get patient -i:5
 ```
