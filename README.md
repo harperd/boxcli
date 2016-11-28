@@ -32,10 +32,6 @@ Retrieve all FHIR Patient resources as a FHIR Bundle
 ```$xslt
 $ box get patients
 ```
-Get results without syntax highlighting
-```$xslt
-$ box get patient -M
-```
 Get the number of Patient resources
 ```$xslt
 $ box get patient -c
