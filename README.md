@@ -50,7 +50,7 @@ $ box delete patient/c7f17c3f-414c-4404-bd77-15aaf948ce7c
 ```
 Do a FHIR based search then a JQ filter to just get the last modified date/time
 ```$xslt
-$ box get patient//5c170415-f585-4129-b9e5-ee7cef6af850 ".meta.lastUpdated"
+$ box get patient/5c170415-f585-4129-b9e5-ee7cef6af850 ".meta.lastUpdated"
 ```
 Do a JQ type search (Get all patient resources where last name is Baker)
 ```$xslt
