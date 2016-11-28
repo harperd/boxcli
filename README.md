@@ -2,7 +2,6 @@
 Command line interface for Aidbox and FHIR.
 
 ##Build
-
 BoxCLI provides a wrapper for [JQ](https://stedolan.github.io/jq/) to allow filtering of JSON results.
 Before building BoxCLI you will need to install [JQ](https://stedolan.github.io/jq/) first.
 
@@ -30,7 +29,6 @@ Options:
 	-i:n	get the resourced at index n
 	
 ## Examples
-
 Retrieve all FHIR Patient resources as a FHIR Bundle
 ```$xslt
 $ box get patients
@@ -67,8 +65,6 @@ Get all names for all Patient resources
 ````$xslt
 $ box get patient ".name[]"
 ```
-	
 # To Do
-
 1. Complete PUT and POST
 2. Add FHIR based search functionality
