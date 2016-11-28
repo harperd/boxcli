@@ -6,7 +6,6 @@ import (
 	"strings"
 	"errors"
 	"os"
-	"fmt"
 )
 
 const MAX_RESOURCES string = "999999999"
