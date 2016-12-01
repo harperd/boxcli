@@ -8,7 +8,7 @@ import (
 )
 
 func showHelp() {
-	fmt.Println("Usage: box [get|put|post|delete] [resource] [options] <jq filter>")
+	fmt.Println("Usage: box [get|put|post|delete] [doc|fhir] [resource] [options] <jq filter>")
 	fmt.Println()
 	fmt.Println("Options:")
 	fmt.Println("\t-M\tmonochrome (don't colorize JSON)")
@@ -62,18 +62,26 @@ func getOptions(args []string) (*boxclient.Options, error) {
 	opt := new(boxclient.Options)
 
 	// -- Option defaults
+	opt.Database = "fhir"
 	opt.Color = true
 	opt.Unformatted = false
 	opt.OmitNulls = true
 	opt.Count = false
 	opt.Index = ""
 
-	if len(args) >= 3 {
+	if len(args) >= 4 {
 		opt.Method = args[1]
-		opt.Resource = args[2]
 
-		if len(args) > 3 {
-			processArgs(args[3:], opt)
+		if(strings.ToLower(args[2]) == "fhir") {
+			opt.Database = "fhir";
+		} else if (strings.ToLower(args[2]) == "doc") {
+			opt.Database = "$documents"
+		}
+
+		opt.Resource = args[3]
+
+		if len(args) > 4 {
+			processArgs(args[4:], opt)
 		}
 	} else {
 		showHelp();

@@ -53,15 +53,17 @@ func getBoxUrl(opt *Options) (string, error) {
 	if len(url) == 0 {
 		err = errors.New("BOXURL not set")
 	} else {
-		url = url + "/fhir/" + opt.Resource
+		url = url + "/" + opt.Database + "/" + opt.Resource
 
-		if strings.Index(opt.Resource, "?") >= 0 {
-			url += "&"
-		} else {
-			url += "?"
+		if(opt.Database == "fhir") {
+			if strings.Index(opt.Resource, "?") >= 0 {
+				url += "&"
+			} else {
+				url += "?"
+			}
+
+			url += "_count=" + MAX_RESOURCES
 		}
-
-		url += "_count=" + MAX_RESOURCES
 	}
 
 	return url, err
