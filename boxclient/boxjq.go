@@ -21,7 +21,7 @@ func ApplyJsonQuery(s string, opt *Options) (string, error) {
 		}
 	} else if(opt.Count) {
 		var i int = -1
-		i, err = getResourceCount(s)
+		i, err = getResourceCount(s, opt)
 
 		if err == nil {
 			result = strconv.Itoa(i)
@@ -40,11 +40,11 @@ func doCompile(opt *Options) bool {
 func compileQuery(s string, opt *Options) string {
 	var q string
 
-	if isBundle(s) {
+	if isBundle(s) || isArray(s) {
 		index, err := getIndex(s, opt)
 
 		if err == nil {
-			q = ".entry[" + index + "].resource"
+			q = strings.Replace(opt.JsonIndex, "{index}", index, -1)
 
 			if len(opt.Query) > 0 {
 				q += "|" + opt.Query
@@ -57,9 +57,10 @@ func compileQuery(s string, opt *Options) string {
 	return q
 }
 
-func getResourceCount(s string) (int, error) {
+func getResourceCount(s string, opt *Options) (int, error) {
 	var count int = -1
-	seq, err := jq.Eval(s, ".entry|length")
+
+	seq, err := jq.Eval(s, opt.JsonBase + "|length")
 
 	if err == nil {
 		count, err = strconv.Atoi(string(seq[0]))
@@ -71,15 +72,11 @@ func getResourceCount(s string) (int, error) {
 func getIndex(s string, opt *Options) (string, error) {
 	var index string = opt.Index
 	var err error
-	var seq []json.RawMessage
 
 	if strings.ToUpper(opt.Index) == "LAST" {
-		seq, err = jq.Eval(s, ".entry|length")
+		var i, err = getResourceCount(s, opt)
 
 		if err == nil {
-			var i int = -1
-			i, err = strconv.Atoi(string(seq[0]))
-
 			if err == nil && i > 0 {
 				i--
 				index = strconv.Itoa(i)
@@ -114,13 +111,32 @@ func formatOutput(seq []json.RawMessage, opt *Options) (string, error) {
 
 func isBundle(s string) bool {
 	var bundle = false
-	seq, _ := jq.Eval(s, "select(.resourceType==\"Bundle\")")
+	seq, _ := jq.Eval(s, "select(.resourceType==\"Bundle\")|length")
 
 	if len(seq) > 0 {
-		bundle = true
+		i, _ := strconv.Atoi(string(seq[0]))
+
+		if i > 0 {
+			bundle = true
+		}
 	}
 
 	return bundle
+}
+
+func isArray(s string) bool {
+	var docArray = false
+	seq, _ := jq.Eval(s, ".[]|length")
+
+	if len(seq) > 0 {
+		i, _ := strconv.Atoi(string(seq[0]))
+
+		if i > 0 {
+		docArray = true
+		}
+	}
+
+	return docArray
 }
 
 func stringValues(seq []json.RawMessage) bool {

@@ -18,7 +18,7 @@ export BOXURL=http://yourbox.aidbox.io
 ```
 
 ##Usage
-box [get|put|post|delete] [resource] [options] \<JQ query\>
+box [get|put|post|delete] [doc|fhir] [resource] [options] \<JQ query\>
 
 Options:
 
@@ -62,4 +62,3 @@ $ box get patient ".name[]"
 ```
 # To Do
 1. Complete PUT and POST
-2. Add functionality for Aidbox repositories (terminology, documents, etc.)

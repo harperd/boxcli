@@ -74,8 +74,12 @@ func getOptions(args []string) (*boxclient.Options, error) {
 
 		if(strings.ToLower(args[2]) == "fhir") {
 			opt.Database = "fhir";
+			opt.JsonBase = ".entry"
+			opt.JsonIndex = "entry[{index}].resource"
 		} else if (strings.ToLower(args[2]) == "doc") {
 			opt.Database = "$documents"
+			opt.JsonBase = ".[]"
+			opt.JsonIndex = ".[{index}]"
 		}
 
 		opt.Resource = args[3]

@@ -3,6 +3,7 @@ package boxclient
 // Runtime options for Box Client
 // Method: GET, PUT, POST, DELETE, etc.
 // Database: FHIR or DOC
+// JsonBase: Base of JSON list for resources or documents (i.e. .entry or .[])
 // Resource: A valid FHIR resource
 // Color: If true, JSON output is syntax highlighted
 // Unformatted: If true, JSON output is not formatted
@@ -13,6 +14,8 @@ type Options struct {
 	Address string
 	Method string
 	Database string
+	JsonBase string
+	JsonIndex string
 	Resource string
 	Color bool
 	Unformatted bool

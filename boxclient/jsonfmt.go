@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"github.com/hokaccha/go-prettyjson"
 	"strings"
+	"fmt"
 )
 
 func ToInterface(s string) (interface{}, error) {
@@ -62,7 +63,9 @@ func formatJsonColor(js string, opt *Options) (string, error) {
 	var s string
 	var err error
 
-	if opt.Database == "$documents" {
+	c := string(js[0])
+
+	if c == "[" {
 		var j []interface{}
 		j, err = ToInterfaceArray(js);
 
@@ -71,10 +74,10 @@ func formatJsonColor(js string, opt *Options) (string, error) {
 
 			if err == nil {
 				s = string(buf)
+				fmt.Println(len(buf))
 			}
 		}
-
-	} else {
+	} else if c == "{" {
 		var j interface{}
 		j, err = ToInterface(js)
 
