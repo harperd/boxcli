@@ -8,8 +8,15 @@ import (
 )
 
 func ToInterface(s string) (interface{}, error) {
-	var i map[string] interface{}
+	var i map[string]interface{}
 	err := json.Unmarshal([]byte(s), &i)
+	return i, err
+}
+
+func ToInterfaceArray(s string) ([]interface{}, error) {
+	var i []interface{}
+	err := json.Unmarshal([]byte(s), &i)
+
 	return i, err
 }
 
@@ -31,7 +38,7 @@ func FormatJson(jsonString string, opt *Options) (string, error) {
 	if opt.Unformatted || strings.Index(jsonString, "{") == -1 {
 		js = jsonString
 	} else if opt.Color {
-		js, err = formatJsonColor(jsonString)
+		js, err = formatJsonColor(jsonString, opt)
 	} else {
 		js, err = formatJsonMono(jsonString)
 	}
@@ -51,15 +58,32 @@ func formatJsonMono(jsonString string) (string, error) {
 	return formatted, err
 }
 
-func formatJsonColor(js string) (string, error) {
+func formatJsonColor(js string, opt *Options) (string, error) {
 	var s string
-	j, err := ToInterface(js)
+	var err error
 
-	if err == nil {
-		buf, err := prettyjson.Marshal(j)
+	if opt.Database == "$documents" {
+		var j []interface{}
+		j, err = ToInterfaceArray(js);
 
 		if err == nil {
-			s = string(buf)
+			buf, err := prettyjson.Marshal(j)
+
+			if err == nil {
+				s = string(buf)
+			}
+		}
+
+	} else {
+		var j interface{}
+		j, err = ToInterface(js)
+
+		if err == nil {
+			buf, err := prettyjson.Marshal(j)
+
+			if err == nil {
+				s = string(buf)
+			}
 		}
 	}
 

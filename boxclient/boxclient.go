@@ -2,10 +2,10 @@ package boxclient
 
 import (
 	"net/http"
-	"io/ioutil"
 	"strings"
 	"errors"
 	"os"
+	"io/ioutil"
 )
 
 const MAX_RESOURCES string = "999999999"
