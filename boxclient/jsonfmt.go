@@ -39,7 +39,7 @@ func FormatJson(jsonString string, opt *Options) (string, error) {
 	if opt.Unformatted || strings.Index(jsonString, "{") == -1 {
 		js = jsonString
 	} else if opt.Color {
-		js, err = formatJsonColor(jsonString, opt)
+		js, err = formatJsonColor(jsonString)
 	} else {
 		js, err = formatJsonMono(jsonString)
 	}
@@ -59,7 +59,7 @@ func formatJsonMono(jsonString string) (string, error) {
 	return formatted, err
 }
 
-func formatJsonColor(js string, opt *Options) (string, error) {
+func formatJsonColor(js string) (string, error) {
 	var s string
 	var err error
 

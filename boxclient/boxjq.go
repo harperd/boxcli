@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"bytes"
 	"strings"
-	"regexp"
 	"strconv"
 )
 
@@ -57,6 +56,8 @@ func compileQuery(s string, opt *Options) string {
 
 	if len(q) > 0 {
 		q = unquote(q)
+		q = strings.Replace(q, "{", "\"", -1)
+		q = strings.Replace(q, "}", "\"", -1)
 	}
 
 	return q
@@ -93,10 +94,13 @@ func getIndex(s string, opt *Options) (string, error) {
 }
 
 func unquote(s string) string {
-	regDouble := regexp.MustCompile(`"([^"]*)"`)
-	regSingle := regexp.MustCompile(`'([^']*)'`)
-	s = regSingle.ReplaceAllString(s, "${1}")
-	s = regDouble.ReplaceAllString(s, "${1}")
+	s = strings.Trim(s, "")
+	c := s[0]
+
+	if c == '"' || c == '\'' {
+		s = s[1:len(s) - 1]
+	}
+
 	return s
 }
 
