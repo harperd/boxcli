@@ -12,9 +12,10 @@ import (
 func ApplyJsonQuery(s string, opt *Options) (string, error) {
 	var result string
 	var err error
+	var seq []json.RawMessage
 
 	if doCompile(opt) {
-		seq, err := jq.Eval(s, compileQuery(s, opt))
+		seq, err = jq.Eval(s, compileQuery(s, opt))
 
 		if err == nil {
 			result, err = formatOutput(seq, opt)
@@ -40,7 +41,7 @@ func doCompile(opt *Options) bool {
 func compileQuery(s string, opt *Options) string {
 	var q string
 
-	if isBundle(s) || isArray(s) {
+	if len(opt.Index) > 0 && (isBundle(s) || isArray(s)) {
 		index, err := getIndex(s, opt)
 
 		if err == nil {
@@ -52,6 +53,10 @@ func compileQuery(s string, opt *Options) string {
 		}
 	} else {
 		q = opt.Query
+	}
+
+	if len(q) > 0 {
+		q = unquote(q)
 	}
 
 	return q
@@ -88,8 +93,11 @@ func getIndex(s string, opt *Options) (string, error) {
 }
 
 func unquote(s string) string {
-	reg := regexp.MustCompile(`"([^"]*)"`)
-	return reg.ReplaceAllString(s, "${1}")
+	regDouble := regexp.MustCompile(`"([^"]*)"`)
+	regSingle := regexp.MustCompile(`'([^']*)'`)
+	s = regSingle.ReplaceAllString(s, "${1}")
+	s = regDouble.ReplaceAllString(s, "${1}")
+	return s
 }
 
 func formatOutput(seq []json.RawMessage, opt *Options) (string, error) {
