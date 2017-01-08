@@ -8,6 +8,32 @@ import (
 	"strconv"
 )
 
+func JQ(q string, js string) string  {
+	var seq []json.RawMessage
+	var err error
+	var result string
+
+	seq, err = jq.Eval(js, q)
+
+	if err == nil {
+		if len(seq) > 0 {
+			result = string(seq[0])
+		}
+	}
+
+	return result
+}
+
+func ShowSummary(json string) string {
+	summary := ""
+
+	if(isBundle(json)) {
+		JQ(".entry[].resource.id", json)
+	}
+
+	return summary
+}
+
 func ApplyJsonQuery(s string, opt *Options) (string, error) {
 	var result string
 	var err error
