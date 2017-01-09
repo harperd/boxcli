@@ -6,9 +6,10 @@ import (
 	"bytes"
 	"strings"
 	"strconv"
+	"fmt"
 )
 
-func JQ(q string, js string) string  {
+func jsonQuery(q string, js string) string  {
 	var seq []json.RawMessage
 	var err error
 	var result string
@@ -19,6 +20,8 @@ func JQ(q string, js string) string  {
 		if len(seq) > 0 {
 			result = string(seq[0])
 		}
+	} else {
+		fmt.Printf("jq -> %s", seq)
 	}
 
 	return result
@@ -28,22 +31,25 @@ func ShowSummary(json string) string {
 	summary := ""
 
 	if(isBundle(json)) {
-		JQ(".entry[].resource.id", json)
+		jsonQuery(".entry[].resource.id", json)
 	}
 
 	return summary
 }
 
-func ApplyJsonQuery(s string, opt *Options) (string, error) {
+func applyJsonQuery(s string, opt *Options) (string, error) {
 	var result string
 	var err error
 	var seq []json.RawMessage
 
 	if doCompile(opt) {
-		seq, err = jq.Eval(s, compileQuery(s, opt))
+		q := compileQuery(s, opt)
+		seq, err = jq.Eval(s, q)
 
 		if err == nil {
 			result, err = formatOutput(seq, opt)
+		} else {
+			fmt.Printf("jq -> %s", q)
 		}
 	} else if(opt.Count) {
 		var i int = -1
@@ -53,7 +59,7 @@ func ApplyJsonQuery(s string, opt *Options) (string, error) {
 			result = strconv.Itoa(i)
 		}
 	} else {
-		result, err = FormatJson(s, opt)
+		result, err = formatJson(s, opt)
 	}
 
 	return result, err
@@ -91,11 +97,14 @@ func compileQuery(s string, opt *Options) string {
 
 func getResourceCount(s string, opt *Options) (int, error) {
 	var count int = -1
+	q := fmt.Sprintf("%s|length", opt.JsonBase)
 
-	seq, err := jq.Eval(s, opt.JsonBase + "|length")
+	seq, err := jq.Eval(s, q)
 
 	if err == nil {
 		count, err = strconv.Atoi(string(seq[0]))
+	} else {
+		fmt.Printf("jq -> %s", q)
 	}
 
 	return count, err
@@ -141,7 +150,7 @@ func formatOutput(seq []json.RawMessage, opt *Options) (string, error) {
 			result, err = toJsonArray(seq, opt)
 		}
 	} else {
-		result, err = FormatJson(string(seq[0]), opt)
+		result, err = formatJson(string(seq[0]), opt)
 	}
 
 	return result, err
@@ -217,7 +226,7 @@ func toJsonArray(seq []json.RawMessage, opt *Options) (string, error) {
 		s = string(seq[i])
 
 		if addValue(s, opt) {
-			s, err = FormatJson(s, opt)
+			s, err = formatJson(s, opt)
 
 			if err == nil {
 				buf.WriteString(s)

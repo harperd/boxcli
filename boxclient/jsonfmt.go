@@ -32,7 +32,7 @@ func ToString(i interface{}) (string, error) {
 	return result, err
 }
 
-func FormatJson(jsonString string, opt *Options) (string, error) {
+func formatJson(jsonString string, opt *Options) (string, error) {
 	var js string
 	var err error
 
