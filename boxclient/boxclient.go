@@ -96,7 +96,7 @@ func checkErrors(js string) error {
 	var err error = nil
 
 	var i interface{}
-	i, err = ToInterface(js)
+	i, err = toInterface(js)
 
 	if err == nil {
 		j := i.(map[string]interface{})

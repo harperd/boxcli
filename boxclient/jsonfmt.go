@@ -8,19 +8,20 @@ import (
 	"fmt"
 )
 
-func ToInterface(s string) (interface{}, error) {
+func toInterface(s string) (interface{}, error) {
 	var i map[string]interface{}
 	err := json.Unmarshal([]byte(s), &i)
 	return i, err
 }
 
-func ToInterfaceArray(s string) ([]interface{}, error) {
+func toInterfaceArray(s string) ([]interface{}, error) {
 	var i []interface{}
 	err := json.Unmarshal([]byte(s), &i)
 
 	return i, err
 }
 
+/*
 func ToString(i interface{}) (string, error) {
 	var result string
 	b, err := json.Marshal(i)
@@ -31,6 +32,7 @@ func ToString(i interface{}) (string, error) {
 
 	return result, err
 }
+*/
 
 func formatJson(jsonString string, opt *Options) (string, error) {
 	var js string
@@ -67,7 +69,7 @@ func formatJsonColor(js string) (string, error) {
 
 	if c == "[" {
 		var j []interface{}
-		j, err = ToInterfaceArray(js);
+		j, err = toInterfaceArray(js);
 
 		if err == nil {
 			buf, err := prettyjson.Marshal(j)
@@ -79,7 +81,7 @@ func formatJsonColor(js string) (string, error) {
 		}
 	} else if c == "{" {
 		var j interface{}
-		j, err = ToInterface(js)
+		j, err = toInterface(js)
 
 		if err == nil {
 			buf, err := prettyjson.Marshal(j)

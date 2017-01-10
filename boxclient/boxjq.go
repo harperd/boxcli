@@ -9,25 +9,22 @@ import (
 	"fmt"
 )
 
-func jsonQuery(q string, js string) string  {
+func evalJq(q string, js string) ([]json.RawMessage, error)  {
 	var seq []json.RawMessage
 	var err error
-	var result string
+	//var result string
 
 	seq, err = jq.Eval(js, q)
 
-	if err == nil {
-		if len(seq) > 0 {
-			result = string(seq[0])
-		}
-	} else {
-		fmt.Printf("jq -> %s", seq)
+	if err != nil {
+		fmt.Printf("jq -> %s\n", q)
 	}
 
-	return result
+	return seq, err
 }
 
-func ShowSummary(json string) string {
+/*
+func showSummary(json string) string {
 	summary := ""
 
 	if(isBundle(json)) {
@@ -36,6 +33,7 @@ func ShowSummary(json string) string {
 
 	return summary
 }
+*/
 
 func applyJsonQuery(s string, opt *Options) (string, error) {
 	var result string
@@ -44,12 +42,11 @@ func applyJsonQuery(s string, opt *Options) (string, error) {
 
 	if doCompile(opt) {
 		q := compileQuery(s, opt)
-		seq, err = jq.Eval(s, q)
+
+		seq, err = evalJq(q, s)
 
 		if err == nil {
 			result, err = formatOutput(seq, opt)
-		} else {
-			fmt.Printf("jq -> %s", q)
 		}
 	} else if(opt.Count) {
 		var i int = -1
@@ -99,12 +96,10 @@ func getResourceCount(s string, opt *Options) (int, error) {
 	var count int = -1
 	q := fmt.Sprintf("%s|length", opt.JsonBase)
 
-	seq, err := jq.Eval(s, q)
+	seq, err := evalJq(q, s)
 
 	if err == nil {
 		count, err = strconv.Atoi(string(seq[0]))
-	} else {
-		fmt.Printf("jq -> %s", q)
 	}
 
 	return count, err
@@ -119,8 +114,7 @@ func getIndex(s string, opt *Options) (string, error) {
 
 		if err == nil {
 			if err == nil && i > 0 {
-				i--
-				index = strconv.Itoa(i)
+				index = strconv.Itoa(i - 1)
 			}
 		}
 	}
@@ -158,7 +152,7 @@ func formatOutput(seq []json.RawMessage, opt *Options) (string, error) {
 
 func isBundle(s string) bool {
 	var bundle = false
-	seq, _ := jq.Eval(s, "select(.resourceType==\"Bundle\")|length")
+	seq, _ := evalJq("select(.resourceType==\"Bundle\")|length", s)
 
 	if len(seq) > 0 {
 		i, _ := strconv.Atoi(string(seq[0]))
@@ -173,13 +167,13 @@ func isBundle(s string) bool {
 
 func isArray(s string) bool {
 	var docArray = false
-	seq, _ := jq.Eval(s, ".[]|length")
+	seq, _ := evalJq(".[]|length", s)
 
 	if len(seq) > 0 {
 		i, _ := strconv.Atoi(string(seq[0]))
 
 		if i > 0 {
-		docArray = true
+			docArray = true
 		}
 	}
 
