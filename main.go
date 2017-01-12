@@ -7,7 +7,7 @@ import (
 )
 
 func showHelp() {
-	fmt.Println("Usage: box [get|put|post|delete] [doc|fhir] [resource] [options] <jq filter>")
+	fmt.Println("Usage: box [box name] [get|put|post|delete] [doc|fhir] [resource] [options] <jq filter>")
 	fmt.Println()
 	fmt.Println("Options:")
 	fmt.Println("\t-M\tmonochrome (don't colorize JSON)")

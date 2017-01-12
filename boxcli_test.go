@@ -10,7 +10,7 @@ import (
 func TestExecute(t *testing.T) {
 	const ERRSTR string = "TestExecute(): %s"
 	var result string
-	args := []string{"", "get", "fhir", "Patient"}
+	args := []string{"", "testbox", "get", "fhir", "Patient"}
 	opt, err := boxclient.GetOptions(args)
 
 	if err == nil {
@@ -28,7 +28,7 @@ func TestIndexFirst(t *testing.T) {
 	const ERRSTR = "TestIndex(): %s"
 	var result string
 
-	args := []string{"", "get", "fhir", "Patient", "-i:0"}
+	args := []string{"", "testbox", "get", "fhir", "Patient", "-i:0"}
 	opt, err := boxclient.GetOptions(args)
 
 	if err == nil {
@@ -37,7 +37,7 @@ func TestIndexFirst(t *testing.T) {
 
 	if err == nil {
 		// -- Get the count
-		args = []string{"", "get", "fhir", "Patient", "-c"}
+		args = []string{"", "testbox", "get", "fhir", "Patient", "-c"}
 		opt, err := boxclient.GetOptions(args)
 
 		if err == nil {
@@ -64,7 +64,7 @@ func TestIndexLast(t *testing.T) {
 	const ERRSTR = "TestIndex(): %s"
 	var result string
 
-	args := []string{"", "get", "fhir", "Patient", "-i:last"}
+	args := []string{"", "testbox", "get", "fhir", "Patient", "-i:last"}
 	opt, err := boxclient.GetOptions(args)
 
 	if err == nil {
@@ -73,7 +73,7 @@ func TestIndexLast(t *testing.T) {
 
 	if err == nil {
 		// -- Get the count
-		args = []string{"", "get", "fhir", "Patient", "-c"}
+		args = []string{"", "testbox", "get", "fhir", "Patient", "-c"}
 		opt, err := boxclient.GetOptions(args)
 
 		if err == nil {

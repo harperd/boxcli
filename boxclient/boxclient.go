@@ -55,10 +55,10 @@ func createBoxRequest(opt *Options) (*http.Request, error) {
 
 func getBoxUrl(opt *Options) (string, error) {
 	var err error
-	var url = os.Getenv("BOXURL")
+	var url = os.Getenv(fmt.Sprintf("BOX_%s", strings.ToUpper(opt.Box)))
 
 	if len(url) == 0 {
-		err = errors.New("BOXURL not set")
+		err = errors.New(fmt.Sprintf("Box %s not found.", opt.Box))
 	} else {
 		url = fmt.Sprintf("%[1]s/%[2]s/%[3]s", url, opt.Database, opt.Resource)
 

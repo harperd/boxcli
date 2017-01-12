@@ -16,7 +16,7 @@ import (
 // Index: If true, only the resource at the specified index is returned
 // Query: The JSON query to apply
 type Options struct {
-	Address string
+	Box string
 	Method string
 	Database string
 	JsonBase string
@@ -60,23 +60,24 @@ func GetOptions(args []string) (*Options, error) {
 	opt.Count = false
 	opt.Index = ""
 
-	if len(args) >= 4 {
-		opt.Method = args[1]
+	if len(args) >= 5 {
+		opt.Box = args[1]
+		opt.Method = args[2]
 
-		if(strings.ToLower(args[2]) == "fhir") {
+		if(strings.ToLower(args[3]) == "fhir") {
 			opt.Database = "fhir";
 			opt.JsonBase = ".entry"
 			opt.JsonIndex = ".entry[{index}].resource"
-		} else if (strings.ToLower(args[2]) == "doc") {
+		} else if (strings.ToLower(args[3]) == "doc") {
 			opt.Database = "$documents"
 			opt.JsonBase = ".[]"
 			opt.JsonIndex = ".[{index}]"
 		}
 
-		opt.Resource = args[3]
+		opt.Resource = args[4]
 
-		if len(args) > 4 {
-			processArgs(args[4:], opt)
+		if len(args) > 5 {
+			processArgs(args[5:], opt)
 		}
 	} else {
 		err = errors.New("Invalid options")
