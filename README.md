@@ -15,7 +15,7 @@ $ go get . && go build -o box
 To use BoxCLI you will need to set an environment variable for each box you want to be able to access. It is recommended to add it to your .bashrc, .profile, .bash_profile, etc.
 BoxCLI environment variables should be all upper case and start with BOX_ followed by the name or alias of the box.
 
-For example to configure a box alias called mybox for (in this case the same as the actual box name) you would set the following environment varialbe:
+For example, to configure a box alias called mybox for (in this case the same as the actual box name) you would set the following environment variable:
 
 ```$xslt
 export BOX_MYBOX=http://mybox.aidbox.io
