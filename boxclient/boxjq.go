@@ -41,9 +41,7 @@ func applyJsonQuery(s string, opt *Options) (string, error) {
 	var seq []json.RawMessage
 
 	if doCompile(opt) {
-		q := compileQuery(s, opt)
-
-		seq, err = evalJq(q, s)
+		seq, err = evalJq(compileQuery(s, opt), s)
 
 		if err == nil {
 			result, err = formatOutput(seq, opt)
@@ -68,8 +66,10 @@ func doCompile(opt *Options) bool {
 
 func compileQuery(s string, opt *Options) string {
 	var q string
+	var bundle = isBundle(s)
+	var array = isArray(s)
 
-	if len(opt.Index) > 0 && (isBundle(s) || isArray(s)) {
+	if len(opt.Index) > 0 && (bundle || array) {
 		index, err := getIndex(s, opt)
 
 		if err == nil {
@@ -80,7 +80,11 @@ func compileQuery(s string, opt *Options) string {
 			}
 		}
 	} else {
-		q = opt.Query
+		if bundle || array {
+			q = fmt.Sprintf("%[1]s|%[2]s", opt.JsonBase, opt.Query)
+		} else {
+			q = opt.Query
+		}
 	}
 
 	if len(q) > 0 {
@@ -189,49 +193,41 @@ func addValue(s string, opt *Options) bool {
 }
 
 func toSimpleList(seq []json.RawMessage, opt *Options) (string, error) {
-	var err error
-	var buf bytes.Buffer
-
-	for i := 0; i < len(seq); i++ {
-		s := string(seq[i])
-
-		if addValue(s, opt) {
-			if i < len(seq) - 1 {
-				buf.WriteString(unquote(s))
-
-				if i < len(seq) - 2 {
-					buf.WriteString("\n")
-				}
-			}
-		}
-	}
-
-	return buf.String(), err
+	return writeList(seq, opt, "", "", "\n")
 }
 
 func toJsonArray(seq []json.RawMessage, opt *Options) (string, error) {
+	return writeList(seq, opt, "[", "]", ", ")
+}
+
+func writeList(seq []json.RawMessage, opt *Options, open string, close string, sep string) (string, error) {
 	var err error
 	var s string
 	var buf bytes.Buffer
+	var indexes = make([]int, len(seq))
 
-	buf.WriteString("[")
-
+	// -- Do a priming read to get the indexes we need.
 	for i := 0; i < len(seq); i++ {
-		s = string(seq[i])
+		if addValue(string(seq[i]), opt) {
+			indexes = append(indexes, i)
+		}
+	}
 
-		if addValue(s, opt) {
-			s, err = formatJson(s, opt)
+	buf.WriteString(open)
 
-			if err == nil {
-				buf.WriteString(s)
+	for i := 0; i<len(indexes); i++ {
+		s = string(seq[indexes[i]])
+		s, err = formatJson(s, opt)
 
-				if i < len(seq) - 1 {
-					buf.WriteString(",\n")
-				}
+		if err == nil {
+			buf.WriteString(unquote(s))
+
+			if i < len(indexes) - 1 {
+				buf.WriteString(sep)
 			}
 		}
 	}
 
-	buf.WriteString("]")
+	buf.WriteString(close)
 	return buf.String(), err
 }

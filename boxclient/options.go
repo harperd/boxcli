@@ -66,7 +66,7 @@ func GetOptions(args []string) (*Options, error) {
 
 		if(strings.ToLower(args[3]) == "fhir") {
 			opt.Database = "fhir";
-			opt.JsonBase = ".entry"
+			opt.JsonBase = ".entry[].resource"
 			opt.JsonIndex = ".entry[{index}].resource"
 		} else if (strings.ToLower(args[3]) == "doc") {
 			opt.Database = "$documents"
