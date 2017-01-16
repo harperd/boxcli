@@ -31,7 +31,7 @@ func main() {
 	}
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
+		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
 	} else {
 		if len(s) > 0 {
 			fmt.Println(s)

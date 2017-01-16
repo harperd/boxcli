@@ -16,9 +16,10 @@ func evalJq(q string, js string) ([]json.RawMessage, error)  {
 
 	seq, err = jq.Eval(js, q)
 
-	if err != nil {
-		fmt.Printf("jq -> %s\n", q)
-	}
+	/*if err != nil {
+		fmt.Printf("ERROR: jq -> %s\n", q)
+		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+	}*/
 
 	return seq, err
 }
