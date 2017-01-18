@@ -10,14 +10,15 @@ import (
 )
 
 const MAX_RESOURCES string = "999999999"
+const DB_FHIR string = "fhir"
 
-func execute(opt *Options) (string, error) {
+func execute(cfg *Config) (string, error) {
 	var err error
 	var req *http.Request
 	var jsonb []byte
 	var jsons string = ""
 
-	req, err = createBoxRequest(opt)
+	req, err = createBoxRequest(cfg)
 
 	if err == nil {
 		jsonb, err = executeRequest(req)
@@ -31,12 +32,12 @@ func execute(opt *Options) (string, error) {
 	return jsons, err
 }
 
-func createBoxRequest(opt *Options) (*http.Request, error) {
+func createBoxRequest(cfg *Config) (*http.Request, error) {
 	var err error
 	var req *http.Request
-	var method = strings.ToUpper(opt.Method)
+	var method = strings.ToUpper(cfg.Connection.Method)
 
-	url, err := getBoxUrl(opt)
+	url, err := getBoxUrl(cfg)
 
 	if err == nil {
 		req, err = http.NewRequest(method, url, nil)
@@ -53,17 +54,17 @@ func createBoxRequest(opt *Options) (*http.Request, error) {
 	return req, err
 }
 
-func getBoxUrl(opt *Options) (string, error) {
+func getBoxUrl(cfg *Config) (string, error) {
 	var err error
-	var url = os.Getenv(fmt.Sprintf("BOX_%s", strings.ToUpper(opt.Box)))
+	var url = os.Getenv(fmt.Sprintf("BOX_%s", strings.ToUpper(cfg.Connection.Box)))
 
 	if len(url) == 0 {
-		err = errors.New(fmt.Sprintf("Box %s not found.", opt.Box))
+		err = errors.New(fmt.Sprintf("Box %s not found.", cfg.Connection.Box))
 	} else {
-		url = fmt.Sprintf("%[1]s/%[2]s/%[3]s", url, opt.Database, opt.Resource)
+		url = fmt.Sprintf("%[1]s/%[2]s/%[3]s", url, cfg.Connection.Database, cfg.Options.Resource)
 
-		if(opt.Database == "fhir") {
-			if strings.Index(opt.Resource, "?") >= 0 {
+		if(cfg.Connection.Database == DB_FHIR) {
+			if strings.Index(cfg.Options.Resource, "?") >= 0 {
 				url += "&"
 			} else {
 				url += "?"

@@ -36,55 +36,54 @@ func showSummary(json string) string {
 }
 */
 
-func applyJsonQuery(s string, opt *Options) (string, error) {
+func applyJsonQuery(s string, cfg *Config) (string, error) {
 	var result string
 	var err error
 	var seq []json.RawMessage
 
-	if doCompile(opt) {
-		seq, err = evalJq(compileQuery(s, opt), s)
+	if doCompile(cfg) {
+		seq, err = evalJq(compileQuery(s, cfg), s)
 
 		if err == nil {
-			result, err = formatOutput(seq, opt)
+			result, err = formatOutput(seq, cfg)
 		}
-	} else if(opt.Count) {
+	} else if(cfg.Options.Count) {
 		var i int = -1
-		i, err = getResourceCount(s, opt)
+		i, err = getResourceCount(s, cfg)
 
 		if err == nil {
 			result = strconv.Itoa(i)
 		}
 	} else {
-		result, err = formatJson(s, opt)
+		result, err = formatJson(s, cfg)
 	}
 
 	return result, err
 }
 
-func doCompile(opt *Options) bool {
-	return len(opt.Query) > 0 || len(opt.Index) > 0
+func doCompile(cfg *Config) bool {
+	return len(cfg.JQ.Custom) > 0 || len(cfg.Options.Index) > 0
 }
 
-func compileQuery(s string, opt *Options) string {
+func compileQuery(s string, cfg *Config) string {
 	var q string
-	var bundle = isBundle(s)
-	var array = isArray(s)
+	var list = isBundle(s) || isArray(s)
 
-	if len(opt.Index) > 0 && (bundle || array) {
-		index, err := getIndex(s, opt)
+	if len(cfg.Options.Index) > 0 && list {
+		index, err := getIndex(s, cfg)
 
 		if err == nil {
-			q = strings.Replace(opt.JsonIndex, "{index}", index, -1)
+			q = strings.Replace(cfg.JQ.List.Index, "{index}", index, -1)
 
-			if len(opt.Query) > 0 {
-				q += "|" + opt.Query
+			if len(cfg.JQ.Custom) > 0 {
+				q += "|" + cfg.JQ.Custom
 			}
 		}
 	} else {
-		if bundle || array {
-			q = fmt.Sprintf("%[1]s|%[2]s", opt.JsonBase, opt.Query)
+		if list {
+			q = fmt.Sprintf("%[1]s|%[2]s", cfg.JQ.List.Resources, cfg.JQ.Custom)
 		} else {
-			q = opt.Query
+			q = cfg.JQ.Custom
 		}
 	}
 
@@ -97,11 +96,10 @@ func compileQuery(s string, opt *Options) string {
 	return q
 }
 
-func getResourceCount(s string, opt *Options) (int, error) {
+func getResourceCount(s string, cfg *Config) (int, error) {
 	var count int = -1
-	q := fmt.Sprintf("%s|length", opt.JsonBase)
 
-	seq, err := evalJq(q, s)
+	seq, err := evalJq(cfg.JQ.List.Count, s)
 
 	if err == nil {
 		count, err = strconv.Atoi(string(seq[0]))
@@ -110,12 +108,12 @@ func getResourceCount(s string, opt *Options) (int, error) {
 	return count, err
 }
 
-func getIndex(s string, opt *Options) (string, error) {
-	var index string = opt.Index
+func getIndex(s string, cfg *Config) (string, error) {
+	var index string = cfg.Options.Index
 	var err error
 
-	if strings.ToUpper(opt.Index) == "LAST" {
-		var i, err = getResourceCount(s, opt)
+	if strings.ToUpper(cfg.Options.Index) == "LAST" {
+		var i, err = getResourceCount(s, cfg)
 
 		if err == nil {
 			if err == nil && i > 0 {
@@ -138,18 +136,18 @@ func unquote(s string) string {
 	return s
 }
 
-func formatOutput(seq []json.RawMessage, opt *Options) (string, error) {
+func formatOutput(seq []json.RawMessage, cfg *Config) (string, error) {
 	var result string
 	var err error
 
 	if len(seq) > 1 {
 		if stringValues(seq) {
-			result, err = toSimpleList(seq, opt)
+			result, err = toSimpleList(seq, cfg)
 		} else {
-			result, err = toJsonArray(seq, opt)
+			result, err = toJsonArray(seq, cfg)
 		}
 	} else {
-		result, err = formatJson(string(seq[0]), opt)
+		result, err = formatJson(string(seq[0]), cfg)
 	}
 
 	return result, err
@@ -189,19 +187,19 @@ func stringValues(seq []json.RawMessage) bool {
 	return strings.Index(string(seq[0]), "\"") == 0
 }
 
-func addValue(s string, opt *Options) bool {
-	return !opt.OmitNulls || (opt.OmitNulls && s != "null")
+func addValue(s string, cfg *Config) bool {
+	return !cfg.Options.OmitNulls || (cfg.Options.OmitNulls && s != "null")
 }
 
-func toSimpleList(seq []json.RawMessage, opt *Options) (string, error) {
-	return writeList(seq, opt, "", "", "\n")
+func toSimpleList(seq []json.RawMessage, cfg *Config) (string, error) {
+	return writeList(seq, cfg, "", "", "\n")
 }
 
-func toJsonArray(seq []json.RawMessage, opt *Options) (string, error) {
-	return writeList(seq, opt, "[", "]", ", ")
+func toJsonArray(seq []json.RawMessage, cfg *Config) (string, error) {
+	return writeList(seq, cfg, "[", "]", ", ")
 }
 
-func writeList(seq []json.RawMessage, opt *Options, open string, close string, sep string) (string, error) {
+func writeList(seq []json.RawMessage, cfg *Config, open string, close string, sep string) (string, error) {
 	var err error
 	var s string
 	var buf bytes.Buffer
@@ -209,7 +207,7 @@ func writeList(seq []json.RawMessage, opt *Options, open string, close string, s
 
 	// -- Do a priming read to get the indexes we need.
 	for i := 0; i < len(seq); i++ {
-		if addValue(string(seq[i]), opt) {
+		if addValue(string(seq[i]), cfg) {
 			indexes = append(indexes, i)
 		}
 	}
@@ -218,7 +216,7 @@ func writeList(seq []json.RawMessage, opt *Options, open string, close string, s
 
 	for i := 0; i<len(indexes); i++ {
 		s = string(seq[indexes[i]])
-		s, err = formatJson(s, opt)
+		s, err = formatJson(s, cfg)
 
 		if err == nil {
 			buf.WriteString(unquote(s))

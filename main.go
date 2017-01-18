@@ -19,13 +19,13 @@ func showHelp() {
 
 func main() {
 	var err error
-	var opt *boxclient.Options
+	var cfg *boxclient.Config
 	var s string
 
-	opt, err = boxclient.GetOptions(os.Args)
+	cfg, err = boxclient.GetConfig(os.Args)
 
 	if err == nil {
-		s, err = boxclient.ApplyOptions(opt)
+		s, err = boxclient.Apply(cfg)
 	} else {
 		showHelp()
 	}

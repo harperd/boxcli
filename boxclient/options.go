@@ -5,32 +5,41 @@ import (
 	"errors"
 )
 
-// Runtime options for Box Client
-// Method: GET, PUT, POST, DELETE, etc.
-// Database: FHIR or DOC
-// JsonBase: Base of JSON list for resources or documents (i.e. .entry or .[])
-// Resource: A valid FHIR resource
-// Color: If true, JSON output is syntax highlighted
-// Unformatted: If true, JSON output is not formatted
-// Count: If true, only the count of the results are returned
-// Index: If true, only the resource at the specified index is returned
-// Query: The JSON query to apply
-type Options struct {
-	Box string
-	Method string
-	Database string
-	JsonBase string
-	JsonIndex string
-	Resource string
-	Color bool
-	Unformatted bool
-	OmitNulls bool
-	Count bool
-	Index string
-	Query string
+const BOX_IDX = 1
+const METHOD_IDX = 2
+const DB_IDX = 3
+const RESOURCE_IDX = 4
+const JQ_IDX =  5
+
+
+type Config struct {
+	Connection struct {
+		           Box      string
+		           Method   string
+		           Database string
+	           }
+	Options    struct {
+		           Resource    string
+		           Index       string
+		           Color       bool
+		           Unformatted bool
+		           OmitNulls   bool
+		           Count       bool
+	           }
+	JQ         struct {
+		           Custom   string
+		           List     struct {
+			                    Count     string
+			                    Index     string
+			                    Resources string
+		                    }
+		           Resource struct {
+			                    Name string
+		                    }
+	           }
 }
 
-func ApplyOptions(opt *Options) (string, error) {
+func Apply(opt *Config) (string, error) {
 	var err error
 	var s string
 
@@ -45,79 +54,72 @@ func ApplyOptions(opt *Options) (string, error) {
 	return s, err
 }
 
-// Set the Options structure by processing the provided command line
-// arguments. This structure is used by the boxclient package to process
-// Aidbox requests.
-func GetOptions(args []string) (*Options, error) {
+func GetConfig(args []string) (*Config, error) {
 	var err error
-	opt := new(Options)
+	cfg := new(Config)
 
-	// -- Option defaults
-	opt.Database = "fhir"
-	opt.Color = true
-	opt.Unformatted = false
-	opt.OmitNulls = true
-	opt.Count = false
-	opt.Index = ""
+	// -- Configuration defaults
+	cfg.Connection.Database = "fhir"
+	cfg.Options.Color = true
+	cfg.Options.Unformatted = false
+	cfg.Options.OmitNulls = true
+	cfg.Options.Count = false
+	cfg.Options.Index = ""
 
 	if len(args) >= 5 {
-		opt.Box = args[1]
-		opt.Method = args[2]
+		cfg.Connection.Box = args[BOX_IDX]
+		cfg.Connection.Method = args[METHOD_IDX]
 
-		if(strings.ToLower(args[3]) == "fhir") {
-			opt.Database = "fhir";
-			opt.JsonBase = ".entry[].resource"
-			opt.JsonIndex = ".entry[{index}].resource"
-		} else if (strings.ToLower(args[3]) == "doc") {
-			opt.Database = "$documents"
-			opt.JsonBase = ".[]"
-			opt.JsonIndex = ".[{index}]"
+		if(strings.ToLower(args[DB_IDX]) == "fhir") {
+			cfg.Connection.Database = "fhir";
+			cfg.JQ.List.Resources = ".entry[].resource"
+			cfg.JQ.List.Index = ".entry[{index}].resource"
+			cfg.JQ.List.Count = ".entry|length"
+		} else if (strings.ToLower(args[DB_IDX]) == "doc") {
+			cfg.Connection.Database = "$documents"
+			cfg.JQ.List.Resources = ".[]"
+			cfg.JQ.List.Index = ".[{index}]"
+			cfg.JQ.List.Count = ".|length"
 		}
 
-		opt.Resource = args[4]
+		cfg.Options.Resource = args[RESOURCE_IDX]
 
 		if len(args) > 5 {
-			processArgs(args[5:], opt)
+			processArgs(args[JQ_IDX:], cfg)
 		}
 	} else {
 		err = errors.New("Invalid options")
 	}
 
-	return opt, err
+	return cfg, err
 }
 
-// Processes all command line arguments. A command line argument is proceeded
-// by a dash ('-'). Any argument that is not proceeded by a dash is assumed to
-// be a JQ query. The first two arguments, method and resource, are required and not
-// processed by this function.
-func processArgs(args []string, opt *Options) {
+func processArgs(args []string, opt *Config) {
 	for c := 0; c < len(args); c++ {
 		arg := args[c]
 		if strings.Index(arg, "-") == 0 {
 			processArg(arg, opt)
 		} else {
 			if len(arg) > 0 {
-				opt.Query = arg
+				opt.JQ.Custom = arg
 			}
 		}
 	}
 }
 
-// Processes all command line arguments. A command line argument is proceeded
-// by a dash ('-'). Acceptable arguments can be -Mcu or -M -c -u individually.
-func processArg(arg string, opt *Options) {
+func processArg(arg string, opt *Config) {
 	if strings.Index(arg, "-i:") > -1 {
-		opt.Index = strings.Split(arg, ":")[1]
+		opt.Options.Index = strings.Split(arg, ":")[1]
 	} else {
 		for c := 1; c < len(arg); c++ {
 			arg := string(arg[c])
 
 			if arg == "M" {
-				opt.Color = false
+				opt.Options.Color = false
 			} else if arg == "u" {
-				opt.Unformatted = true
+				opt.Options.Unformatted = true
 			} else if arg == "c" {
-				opt.Count = true
+				opt.Options.Count = true
 			}
 		}
 	}

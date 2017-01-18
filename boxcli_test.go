@@ -11,10 +11,10 @@ func TestExecute(t *testing.T) {
 	const ERRSTR string = "TestExecute(): %s"
 	var result string
 	args := []string{"", "testbox", "get", "fhir", "Patient"}
-	opt, err := boxclient.GetOptions(args)
+	cfg, err := boxclient.GetConfig(args)
 
 	if err == nil {
-		result, err = boxclient.ApplyOptions(opt)
+		result, err = boxclient.Apply(cfg)
 	}
 
 	if err != nil {
@@ -29,19 +29,19 @@ func TestIndexFirst(t *testing.T) {
 	var result string
 
 	args := []string{"", "testbox", "get", "fhir", "Patient", "-i:0"}
-	opt, err := boxclient.GetOptions(args)
+	cfg, err := boxclient.GetConfig(args)
 
 	if err == nil {
-		result, err = boxclient.ApplyOptions(opt)
+		result, err = boxclient.Apply(cfg)
 	}
 
 	if err == nil {
 		// -- Get the count
 		args = []string{"", "testbox", "get", "fhir", "Patient", "-c"}
-		opt, err := boxclient.GetOptions(args)
+		opt, err := boxclient.GetConfig(args)
 
 		if err == nil {
-			result, err = boxclient.ApplyOptions(opt)
+			result, err = boxclient.Apply(opt)
 
 			if err == nil {
 				if result != "1" {
@@ -65,19 +65,19 @@ func TestIndexLast(t *testing.T) {
 	var result string
 
 	args := []string{"", "testbox", "get", "fhir", "Patient", "-i:last"}
-	opt, err := boxclient.GetOptions(args)
+	cfg, err := boxclient.GetConfig(args)
 
 	if err == nil {
-		result, err = boxclient.ApplyOptions(opt)
+		result, err = boxclient.Apply(cfg)
 	}
 
 	if err == nil {
 		// -- Get the count
 		args = []string{"", "testbox", "get", "fhir", "Patient", "-c"}
-		opt, err := boxclient.GetOptions(args)
+		opt, err := boxclient.GetConfig(args)
 
 		if err == nil {
-			result, err = boxclient.ApplyOptions(opt)
+			result, err = boxclient.Apply(opt)
 
 			if err == nil {
 				if result != "1" {

@@ -34,13 +34,13 @@ func ToString(i interface{}) (string, error) {
 }
 */
 
-func formatJson(jsonString string, opt *Options) (string, error) {
+func formatJson(jsonString string, cfg *Config) (string, error) {
 	var js string
 	var err error
 
-	if opt.Unformatted || strings.Index(jsonString, "{") == -1 {
+	if cfg.Options.Unformatted || strings.Index(jsonString, "{") == -1 {
 		js = jsonString
-	} else if opt.Color {
+	} else if cfg.Options.Color {
 		js, err = formatJsonColor(jsonString)
 	} else {
 		js, err = formatJsonMono(jsonString)
