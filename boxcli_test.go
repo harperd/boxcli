@@ -95,3 +95,5 @@ func TestIndexLast(t *testing.T) {
 		fmt.Println(result)
 	}
 }
+
+// box testbox get fhir CareTeam .participant[].member.reference

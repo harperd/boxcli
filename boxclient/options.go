@@ -3,6 +3,7 @@ package boxclient
 import (
 	"strings"
 	"errors"
+	"fmt"
 )
 
 const BOX_IDX = 1
@@ -10,7 +11,6 @@ const METHOD_IDX = 2
 const DB_IDX = 3
 const RESOURCE_IDX = 4
 const JQ_IDX =  5
-
 
 type Config struct {
 	Connection struct {
@@ -39,19 +39,26 @@ type Config struct {
 	           }
 }
 
-func Apply(opt *Config) (string, error) {
+func Apply(cfg *Config) (string, string, error) {
 	var err error
-	var s string
+	var json string
+	var message string
 
 	if err == nil {
-		s, err = execute(opt)
+		json, message, err = execute(cfg)
 
 		if err == nil {
-			s, err = applyJsonQuery(s, opt)
+			if strings.ToUpper(cfg.Connection.Method) == "DELETE" {
+				message = fmt.Sprintf("%s deleted.", cfg.Options.Resource)
+			} else {
+				if len(json) > 0 {
+					json, err = applyJsonQuery(json, cfg)
+				}
+			}
 		}
 	}
 
-	return s, err
+	return json, message, err
 }
 
 func GetConfig(args []string) (*Config, error) {
@@ -101,7 +108,11 @@ func processArgs(args []string, opt *Config) {
 			processArg(arg, opt)
 		} else {
 			if len(arg) > 0 {
-				opt.JQ.Custom = arg
+				if arg[0] == '.' {
+					opt.JQ.Custom = arg
+				} else {
+					opt.JQ.Custom = "." + arg
+				}
 			}
 		}
 	}

@@ -20,21 +20,22 @@ func showHelp() {
 func main() {
 	var err error
 	var cfg *boxclient.Config
-	var s string
+	var json string
+	var message string
 
 	cfg, err = boxclient.GetConfig(os.Args)
 
 	if err == nil {
-		s, err = boxclient.Apply(cfg)
+		json, message, err = boxclient.Apply(cfg)
 	} else {
 		showHelp()
 	}
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
-	} else {
-		if len(s) > 0 {
-			fmt.Println(s)
-		}
+	} else if len(message) > 0 {
+		fmt.Println(message)
+	} else if len(json) > 0 {
+		fmt.Println(json)
 	}
 }

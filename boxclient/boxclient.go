@@ -12,24 +12,28 @@ import (
 const MAX_RESOURCES string = "999999999"
 const DB_FHIR string = "fhir"
 
-func execute(cfg *Config) (string, error) {
+func execute(cfg *Config) (string, string, error) {
 	var err error
 	var req *http.Request
 	var jsonb []byte
 	var jsons string = ""
+	var message string
 
 	req, err = createBoxRequest(cfg)
 
 	if err == nil {
-		jsonb, err = executeRequest(req)
+		jsonb, message, err = executeRequest(req)
 
 		if err == nil {
 			jsons = string(jsonb)
-			err = checkErrors(jsons)
+
+			if len(jsons) > 0 {
+				err = checkErrors(jsons)
+			}
 		}
 	}
 
-	return jsons, err
+	return jsons, message, err
 }
 
 func createBoxRequest(cfg *Config) (*http.Request, error) {
@@ -77,20 +81,26 @@ func getBoxUrl(cfg *Config) (string, error) {
 	return url, err
 }
 
-func executeRequest(req *http.Request) ([]byte, error) {
+func executeRequest(req *http.Request) ([]byte, string, error) {
 	var err error
 	var resp *http.Response
 	var client = &http.Client{}
 	var jsonb []byte
+	var message string
 
 	resp, err = client.Do(req)
 
 	if err == nil {
 		defer resp.Body.Close()
-		jsonb, err = ioutil.ReadAll(resp.Body)
+
+		if resp.StatusCode >= 400 {
+			message = resp.Status
+		} else {
+			jsonb, err = ioutil.ReadAll(resp.Body)
+		}
 	}
 
-	return jsonb, err
+	return jsonb, message, err
 }
 
 func checkErrors(js string) error {
