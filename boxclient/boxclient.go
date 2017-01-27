@@ -28,7 +28,7 @@ func execute(cfg *Config) (string, string, error) {
 			jsons = string(jsonb)
 
 			if len(jsons) > 0 {
-				err = checkErrors(jsons)
+				err = checkErrors(cfg, jsons)
 			}
 		}
 	}
@@ -103,16 +103,19 @@ func executeRequest(req *http.Request) ([]byte, string, error) {
 	return jsonb, message, err
 }
 
-func checkErrors(js string) error {
+func checkErrors(cfg *Config, js string) error {
 	var err error = nil
 
-	var i interface{}
-	i, err = toInterface(js)
+	// TODO: Fix for use with $documents
+	if cfg.Connection.Box == "fhir" {
+		var i interface{}
+		i, err = toInterface(js)
 
-	if err == nil {
-		j := i.(map[string]interface{})
-		if msg, ok := j["message"]; ok {
-			err = errors.New(msg.(string))
+		if err == nil {
+			j := i.(map[string]interface{})
+			if msg, ok := j["message"]; ok {
+				err = errors.New(msg.(string))
+			}
 		}
 	}
 
