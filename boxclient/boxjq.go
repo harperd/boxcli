@@ -7,6 +7,7 @@ import (
 	"strings"
 	"strconv"
 	"fmt"
+	"os"
 )
 
 func evalJq(q string, js string) ([]json.RawMessage, error)  {
@@ -16,10 +17,10 @@ func evalJq(q string, js string) ([]json.RawMessage, error)  {
 
 	seq, err = jq.Eval(js, q)
 
-	/*if err != nil {
+	if err != nil {
 		fmt.Printf("ERROR: jq -> %s\n", q)
 		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
-	}*/
+	}
 
 	return seq, err
 }
@@ -81,7 +82,11 @@ func compileQuery(s string, cfg *Config) string {
 		}
 	} else {
 		if list {
-			q = fmt.Sprintf("%[1]s|%[2]s", cfg.JQ.List.Resources, cfg.JQ.Custom)
+			if cfg.JQ.List.Resources == cfg.JQ.Custom {
+				q = cfg.JQ.Custom
+			} else {
+				q = fmt.Sprintf("%[1]s|%[2]s", cfg.JQ.List.Resources, cfg.JQ.Custom)
+			}
 		} else {
 			q = cfg.JQ.Custom
 		}

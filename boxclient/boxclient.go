@@ -7,6 +7,7 @@ import (
 	"os"
 	"io/ioutil"
 	"fmt"
+	"encoding/base64"
 )
 
 const MAX_RESOURCES string = "999999999"
@@ -40,14 +41,27 @@ func createBoxRequest(cfg *Config) (*http.Request, error) {
 	var err error
 	var req *http.Request
 	var method = strings.ToUpper(cfg.Connection.Method)
+	var url string
+	var auth string
 
-	url, err := getBoxUrl(cfg)
+	url, auth, err = getBoxSettings(cfg)
 
 	if err == nil {
 		req, err = http.NewRequest(method, url, nil)
 
 		if err == nil {
 			req.Header.Add("Content-Type", "application/json")
+			req.Header.Add("Authorization", "Basic " + auth)
+
+			/*
+			var token string
+			token, err = getJwt()
+
+			if err == nil {
+				fmt.Println(token)
+				req.Header.Add("Authorization", "Bearer " + token)
+			}
+			*/
 
 			if method == "POST" || method == "PUT" {
 				req.Header.Add("Accepts", "application/json")
@@ -58,27 +72,59 @@ func createBoxRequest(cfg *Config) (*http.Request, error) {
 	return req, err
 }
 
-func getBoxUrl(cfg *Config) (string, error) {
-	var err error
-	var url = os.Getenv(fmt.Sprintf("BOX_%s", strings.ToUpper(cfg.Connection.Box)))
+/*
+func getJwt() (string, error) {
+	jwtToken := jwt.New(jwt.SigningMethodHS256)
 
-	if len(url) == 0 {
+	claims := jwtToken.Claims.(jwt.MapClaims)
+
+	claims["nickname"] = "boxcli"
+	claims["iss"] = ""
+	claims["sub"] = ""
+	claims["aud"] = ""
+	claims["exp"] = time.Now().Add(time.Hour).Unix()
+
+	mySigningKey := []byte("secret")
+
+	return jwtToken.SignedString(mySigningKey)
+}
+*/
+
+func getBoxSettings(cfg *Config) (string, string, error) {
+	var err error
+	var url string
+	var auth string
+	var settings = os.Getenv(fmt.Sprintf("BOX_%s", strings.ToUpper(cfg.Connection.Box)))
+
+	if len(settings) == 0 {
 		err = errors.New(fmt.Sprintf("Box %s not found.", cfg.Connection.Box))
 	} else {
-		url = fmt.Sprintf("%[1]s/%[2]s/%[3]s", url, cfg.Connection.Database, cfg.Options.Resource)
+		var tokens = strings.Split(settings, ";")
 
-		if(cfg.Connection.Database == DB_FHIR) {
-			if strings.Index(cfg.Options.Resource, "?") >= 0 {
-				url += "&"
-			} else {
-				url += "?"
+		if len(tokens) < 2 {
+			err = errors.New("Invalid box settings")
+		} else {
+			url = fmt.Sprintf("%[1]s/%[2]s/%[3]s", tokens[0], cfg.Connection.Database, cfg.Options.Resource)
+
+			if (cfg.Connection.Database == DB_FHIR) {
+				if strings.Index(cfg.Options.Resource, "?") >= 0 {
+					url += "&"
+				} else {
+					url += "?"
+				}
+
+				url += "_count=" + MAX_RESOURCES
 			}
 
-			url += "_count=" + MAX_RESOURCES
+			auth = getBasicAuthEncoded(tokens[1])
 		}
 	}
 
-	return url, err
+	return url, auth, err
+}
+
+func getBasicAuthEncoded (auth string) (string) {
+	return base64.StdEncoding.EncodeToString([]byte(auth))
 }
 
 func executeRequest(req *http.Request) ([]byte, string, error) {

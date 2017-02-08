@@ -13,6 +13,10 @@ const RESOURCE_IDX = 4
 const JQ_IDX =  5
 
 type Config struct {
+	BasicAuth struct {
+	                Username string
+					Password string
+	              }
 	Connection struct {
 		           Box      string
 		           Method   string
@@ -66,7 +70,7 @@ func GetConfig(args []string) (*Config, error) {
 	cfg := new(Config)
 
 	// -- Configuration defaults
-	cfg.Connection.Database = "fhir"
+	cfg.Connection.Database = ""
 	cfg.Options.Color = true
 	cfg.Options.Unformatted = false
 	cfg.Options.OmitNulls = true
@@ -108,11 +112,7 @@ func processArgs(args []string, opt *Config) {
 			processArg(arg, opt)
 		} else {
 			if len(arg) > 0 {
-				if arg[0] == '.' {
-					opt.JQ.Custom = arg
-				} else {
-					opt.JQ.Custom = "." + arg
-				}
+				opt.JQ.Custom = arg
 			}
 		}
 	}

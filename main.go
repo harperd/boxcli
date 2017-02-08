@@ -6,6 +6,11 @@ import (
 	"github.com/harperd/boxcli/boxclient"
 )
 
+/*
+box test get fhir Patient '.entry[].resource|select(.id=="db327e81-cef5-4f1b-b20a-0f2332b02584")'
+ERROR: jq: error (at <stdin>:0): Cannot iterate over null (null)
+ */
+
 func showHelp() {
 	fmt.Println("Usage: box [box name] [get|put|post|delete] [doc|fhir] [resource] [options] <jq filter>")
 	fmt.Println()
