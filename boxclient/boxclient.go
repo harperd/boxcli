@@ -21,7 +21,6 @@ func execute(cfg *Config) (string, string, error) {
 	var jsons string
 
 	req := createBoxRequest(cfg)
-
 	jsonb, message := executeRequest(req)
 
 	if jsons = string(jsonb); len(jsons) > 0 {
@@ -31,57 +30,59 @@ func execute(cfg *Config) (string, string, error) {
 	return jsons, message, err
 }
 
-func createBoxRequest(cfg *Config) (*http.Request) {
-	var method = strings.ToUpper(cfg.Connection.Method)
+func createBoxRequest(cfg *Config) *http.Request {
+	settings := getBoxSettings(cfg)
+	return createRequest(cfg, settings)
+}
 
-	url, auth := getBoxSettings(cfg)
-	req, err := http.NewRequest(method, url, nil)
+func createRequest(cfg *Config, settings string) *http.Request {
+	req, err := http.NewRequest(
+		strings.ToUpper(cfg.Connection.Method),
+		getUrl(settings, cfg), nil)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Basic " + auth)
-
-	/*
-			var token string
-			token, err = getJwt()
-
-			if err == nil {
-				fmt.Println(token)
-				req.Header.Add("Authorization", "Bearer " + token)
-			}
-			*/
-
-	if method == "POST" || method == "PUT" {
-		req.Header.Add("Accepts", "application/json")
-	}
+	setHeader(req, cfg, settings)
 
 	return req
 }
 
-/*
-func getJwt() (string, error) {
-	jwtToken := jwt.New(jwt.SigningMethodHS256)
+func setHeader(req *http.Request, cfg *Config, settings string) {
+	var method = strings.ToUpper(cfg.Connection.Method)
 
-	claims := jwtToken.Claims.(jwt.MapClaims)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Basic " + getAuth(settings))
 
-	claims["nickname"] = "boxcli"
-	claims["iss"] = ""
-	claims["sub"] = ""
-	claims["aud"] = ""
-	claims["exp"] = time.Now().Add(time.Hour).Unix()
-
-	mySigningKey := []byte("secret")
-
-	return jwtToken.SignedString(mySigningKey)
+	if method == "POST" || method == "PUT" {
+		req.Header.Add("Accepts", "application/json")
+	}
 }
-*/
 
-func getBoxSettings(cfg *Config) (string, string) {
-	var url string
-	var auth string
+func getUrl(settings string, cfg *Config) string {
+	var tokens = strings.Split(settings, ";")
+	url := fmt.Sprintf("%[1]s/%[2]s/%[3]s", tokens[0], cfg.Connection.Database, cfg.Options.Resource)
+
+	if (cfg.Connection.Database == DB_FHIR) {
+		if strings.Index(cfg.Options.Resource, "?") >= 0 {
+			url += "&"
+		} else {
+			url += "?"
+		}
+
+		url += "_count=" + MAX_RESOURCES
+	}
+
+	return url
+}
+
+func getAuth(settings string) string {
+	var tokens = strings.Split(settings, ";")
+	return base64.StdEncoding.EncodeToString([]byte(tokens[1]))
+}
+
+func getBoxSettings(cfg *Config) string {
 	var settings = os.Getenv(fmt.Sprintf("BOX_%s", strings.ToUpper(cfg.Connection.Box)))
 
 	if len(settings) == 0 {
@@ -91,55 +92,40 @@ func getBoxSettings(cfg *Config) (string, string) {
 
 		if len(tokens) < 2 {
 			log.Fatal("Invalid box settings")
-		} else {
-			url = fmt.Sprintf("%[1]s/%[2]s/%[3]s", tokens[0], cfg.Connection.Database, cfg.Options.Resource)
-
-			if (cfg.Connection.Database == DB_FHIR) {
-				if strings.Index(cfg.Options.Resource, "?") >= 0 {
-					url += "&"
-				} else {
-					url += "?"
-				}
-
-				url += "_count=" + MAX_RESOURCES
-			}
-
-			auth = base64.StdEncoding.EncodeToString([]byte(tokens[1]))
 		}
 	}
 
-	return url, auth
+	return settings
 }
 
 func executeRequest(req *http.Request) ([]byte, string) {
 	var client = &http.Client{}
 	var jsonb []byte
 	var message string
-	var err error
 
-	resp, err := client.Do(req)
+	if resp, err := client.Do(req); err == nil {
+		defer resp.Body.Close()
 
-	if err != nil {
-		log.Fatal(err)
-	}
+		if resp.StatusCode >= 400 {
+			message = resp.Status
+		} else {
+			var err error
 
-	defer resp.Body.Close()
+			jsonb, err = ioutil.ReadAll(resp.Body)
 
-	if resp.StatusCode >= 400 {
-		message = resp.Status
-	} else {
-		jsonb, err = ioutil.ReadAll(resp.Body)
-
-		if err != nil {
-			log.Fatal(err)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
+	} else {
+		log.Fatal(err)
 	}
 
 	return jsonb, message
 }
 
 func checkErrors(cfg *Config, js string) error {
-	var err error = nil
+	var err error
 
 	// TODO: Fix for use with $documents
 	if cfg.Connection.Box == "fhir" {
