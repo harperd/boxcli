@@ -6,11 +6,13 @@ import (
 	"fmt"
 )
 
-const BOX_IDX = 1
-const METHOD_IDX = 2
-const DB_IDX = 3
-const RESOURCE_IDX = 4
-const JQ_IDX =  5
+const (
+	BOX_IDX = 1
+	METHOD_IDX = 2
+	DB_IDX = 3
+	RESOURCE_IDX = 4
+	JQ_IDX =  5
+)
 
 type Config struct {
 	BasicAuth struct {
@@ -44,20 +46,14 @@ type Config struct {
 }
 
 func Apply(cfg *Config) (string, string, error) {
-	var err error
-	var json string
-	var message string
+	json, message, err := execute(cfg)
 
 	if err == nil {
-		json, message, err = execute(cfg)
-
-		if err == nil {
-			if strings.ToUpper(cfg.Connection.Method) == "DELETE" {
-				message = fmt.Sprintf("%s deleted.", cfg.Options.Resource)
-			} else {
-				if len(json) > 0 {
-					json, err = applyJsonQuery(json, cfg)
-				}
+		if strings.ToUpper(cfg.Connection.Method) == "DELETE" {
+			message = fmt.Sprintf("%s deleted.", cfg.Options.Resource)
+		} else {
+			if len(json) > 0 {
+				json = applyJsonQuery(json, cfg)
 			}
 		}
 	}

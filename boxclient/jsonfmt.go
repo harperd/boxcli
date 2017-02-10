@@ -5,20 +5,27 @@ import (
 	"bytes"
 	"github.com/hokaccha/go-prettyjson"
 	"strings"
-	"fmt"
+	"log"
 )
 
-func toInterface(s string) (interface{}, error) {
+func toInterface(s string) interface{} {
 	var i map[string]interface{}
-	err := json.Unmarshal([]byte(s), &i)
-	return i, err
+
+	if err := json.Unmarshal([]byte(s), &i); err != nil {
+		log.Fatal(err)
+	}
+
+	return i
 }
 
-func toInterfaceArray(s string) ([]interface{}, error) {
+func toInterfaceArray(s string) []interface{} {
 	var i []interface{}
-	err := json.Unmarshal([]byte(s), &i)
 
-	return i, err
+	if err := json.Unmarshal([]byte(s), &i); err != nil {
+		log.Fatal(err)
+	}
+
+	return i
 }
 
 /*
@@ -34,63 +41,48 @@ func ToString(i interface{}) (string, error) {
 }
 */
 
-func formatJson(jsonString string, cfg *Config) (string, error) {
+func formatJson(jsonString string, cfg *Config) string {
 	var js string
-	var err error
 
 	if cfg.Options.Unformatted || strings.Index(jsonString, "{") == -1 {
 		js = jsonString
 	} else if cfg.Options.Color {
-		js, err = formatJsonColor(jsonString)
+		js = formatJsonColor(jsonString);
 	} else {
-		js, err = formatJsonMono(jsonString)
+		js = formatJsonMono(jsonString);
 	}
 
-	return js, err
+	return js
 }
 
-func formatJsonMono(jsonString string) (string, error) {
-	var formatted string
+func formatJsonMono(jsonString string) string {
 	var byteBuf bytes.Buffer
-	err := json.Indent(&byteBuf, []byte(jsonString), "", "  ")
 
-	if err == nil {
-		formatted = byteBuf.String()
+	if err := json.Indent(&byteBuf, []byte(jsonString), "", "  "); err != nil {
+		log.Fatal(err)
 	}
 
-	return formatted, err
+	return byteBuf.String()
 }
 
-func formatJsonColor(js string) (string, error) {
-	var s string
+func formatJsonColor(js string) string {
+	var buf []byte
 	var err error
-
 	c := string(js[0])
 
 	if c == "[" {
-		var j []interface{}
-		j, err = toInterfaceArray(js);
+		j := toInterfaceArray(js);
 
-		if err == nil {
-			buf, err := prettyjson.Marshal(j)
-
-			if err == nil {
-				s = string(buf)
-				fmt.Println(len(buf))
-			}
+		if buf, err = prettyjson.Marshal(j); err != nil {
+			log.Fatal(err)
 		}
 	} else if c == "{" {
-		var j interface{}
-		j, err = toInterface(js)
+		j := toInterface(js)
 
-		if err == nil {
-			buf, err := prettyjson.Marshal(j)
-
-			if err == nil {
-				s = string(buf)
-			}
+		if buf, err = prettyjson.Marshal(j); err != nil {
+			log.Fatal(err)
 		}
 	}
 
-	return s, err
+	return string(buf)
 }

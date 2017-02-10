@@ -7,22 +7,17 @@ import (
 	"strings"
 	"strconv"
 	"fmt"
-	"os"
+	"log"
 )
 
-func evalJq(q string, js string) ([]json.RawMessage, error)  {
-	var seq []json.RawMessage
-	var err error
-	//var result string
-
-	seq, err = jq.Eval(js, q)
-
-	if err != nil {
+func evalJq(q string, js string) []json.RawMessage {
+	if seq, err := jq.Eval(js, q); err != nil {
 		fmt.Printf("ERROR: jq -> %s\n", q)
-		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+		log.Fatal(err)
+		return nil
+	} else {
+		return seq
 	}
-
-	return seq, err
 }
 
 /*
@@ -37,29 +32,21 @@ func showSummary(json string) string {
 }
 */
 
-func applyJsonQuery(s string, cfg *Config) (string, error) {
+func applyJsonQuery(s string, cfg *Config) string {
 	var result string
-	var err error
 	var seq []json.RawMessage
 
 	if doCompile(cfg) {
-		seq, err = evalJq(compileQuery(s, cfg), s)
-
-		if err == nil {
-			result, err = formatOutput(seq, cfg)
-		}
-	} else if(cfg.Options.Count) {
-		var i int = -1
-		i, err = getResourceCount(s, cfg)
-
-		if err == nil {
-			result = strconv.Itoa(i)
-		}
+		seq = evalJq(compileQuery(s, cfg), s)
+		result = formatOutput(seq, cfg)
+	} else if (cfg.Options.Count) {
+		i := getResourceCount(s, cfg)
+		result = strconv.Itoa(i)
 	} else {
-		result, err = formatJson(s, cfg)
+		result = formatJson(s, cfg)
 	}
 
-	return result, err
+	return result
 }
 
 func doCompile(cfg *Config) bool {
@@ -71,14 +58,11 @@ func compileQuery(s string, cfg *Config) string {
 	var list = isBundle(s) || isArray(s)
 
 	if len(cfg.Options.Index) > 0 && list {
-		index, err := getIndex(s, cfg)
+		index := getIndex(s, cfg)
+		q = strings.Replace(cfg.JQ.List.Index, "{index}", index, -1)
 
-		if err == nil {
-			q = strings.Replace(cfg.JQ.List.Index, "{index}", index, -1)
-
-			if len(cfg.JQ.Custom) > 0 {
-				q += "|" + cfg.JQ.Custom
-			}
+		if len(cfg.JQ.Custom) > 0 {
+			q += "|" + cfg.JQ.Custom
 		}
 	} else {
 		if list {
@@ -101,33 +85,28 @@ func compileQuery(s string, cfg *Config) string {
 	return q
 }
 
-func getResourceCount(s string, cfg *Config) (int, error) {
-	var count int = -1
-
-	seq, err := evalJq(cfg.JQ.List.Count, s)
-
-	if err == nil {
-		count, err = strconv.Atoi(string(seq[0]))
-	}
-
-	return count, err
-}
-
-func getIndex(s string, cfg *Config) (string, error) {
-	var index string = cfg.Options.Index
+func getResourceCount(s string, cfg *Config) int {
+	var i int
 	var err error
 
-	if strings.ToUpper(cfg.Options.Index) == "LAST" {
-		var i, err = getResourceCount(s, cfg)
+	seq := evalJq(cfg.JQ.List.Count, s)
+	if i, err = strconv.Atoi(string(seq[0])); err != nil {
+		log.Fatal(err)
+	}
 
-		if err == nil {
-			if err == nil && i > 0 {
-				index = strconv.Itoa(i - 1)
-			}
+	return i
+}
+
+func getIndex(s string, cfg *Config) string {
+	var index string = cfg.Options.Index
+
+	if strings.ToUpper(cfg.Options.Index) == "LAST" {
+		if i := getResourceCount(s, cfg); i > 0 {
+			index = strconv.Itoa(i - 1)
 		}
 	}
 
-	return index, err
+	return index
 }
 
 func unquote(s string) string {
@@ -141,32 +120,31 @@ func unquote(s string) string {
 	return s
 }
 
-func formatOutput(seq []json.RawMessage, cfg *Config) (string, error) {
+func formatOutput(seq []json.RawMessage, cfg *Config) string {
 	var result string
-	var err error
 
 	if len(seq) > 1 {
 		if stringValues(seq) {
-			result, err = toSimpleList(seq, cfg)
+			result = toSimpleList(seq, cfg)
 		} else {
-			result, err = toJsonArray(seq, cfg)
+			result = toJsonArray(seq, cfg)
 		}
 	} else {
-		result, err = formatJson(string(seq[0]), cfg)
+		result = formatJson(string(seq[0]), cfg)
 	}
 
-	return result, err
+	return result
 }
 
 func isBundle(s string) bool {
 	var bundle = false
-	seq, _ := evalJq("select(.resourceType==\"Bundle\")|length", s)
-
-	if len(seq) > 0 {
-		i, _ := strconv.Atoi(string(seq[0]))
-
-		if i > 0 {
-			bundle = true
+	if seq := evalJq("select(.resourceType==\"Bundle\")|length", s); len(seq) > 0 {
+		if i, err := strconv.Atoi(string(seq[0])); err != nil {
+			log.Fatal(err)
+		} else {
+			if i > 0 {
+				bundle = true
+			}
 		}
 	}
 
@@ -175,13 +153,13 @@ func isBundle(s string) bool {
 
 func isArray(s string) bool {
 	var docArray = false
-	seq, _ := evalJq(".[]|length", s)
-
-	if len(seq) > 0 {
-		i, _ := strconv.Atoi(string(seq[0]))
-
-		if i > 0 {
-			docArray = true
+	if seq := evalJq(".[]|length", s); len(seq) > 0 {
+		if i, err := strconv.Atoi(string(seq[0])); err != nil {
+			log.Fatal(err)
+		} else {
+			if i > 0 {
+				docArray = true
+			}
 		}
 	}
 
@@ -196,17 +174,15 @@ func addValue(s string, cfg *Config) bool {
 	return !cfg.Options.OmitNulls || (cfg.Options.OmitNulls && s != "null")
 }
 
-func toSimpleList(seq []json.RawMessage, cfg *Config) (string, error) {
+func toSimpleList(seq []json.RawMessage, cfg *Config) string {
 	return writeList(seq, cfg, "", "", "\n")
 }
 
-func toJsonArray(seq []json.RawMessage, cfg *Config) (string, error) {
+func toJsonArray(seq []json.RawMessage, cfg *Config) string {
 	return writeList(seq, cfg, "[", "]", ", ")
 }
 
-func writeList(seq []json.RawMessage, cfg *Config, open string, close string, sep string) (string, error) {
-	var err error
-	var s string
+func writeList(seq []json.RawMessage, cfg *Config, open string, close string, sep string) string {
 	var buf bytes.Buffer
 	var indexes = make([]int, len(seq))
 
@@ -219,19 +195,16 @@ func writeList(seq []json.RawMessage, cfg *Config, open string, close string, se
 
 	buf.WriteString(open)
 
-	for i := 0; i<len(indexes); i++ {
-		s = string(seq[indexes[i]])
-		s, err = formatJson(s, cfg)
+	for i := 0; i < len(indexes); i++ {
+		s := formatJson(string(seq[indexes[i]]), cfg)
 
-		if err == nil {
-			buf.WriteString(unquote(s))
+		buf.WriteString(unquote(s))
 
-			if i < len(indexes) - 1 {
-				buf.WriteString(sep)
-			}
+		if i < len(indexes) - 1 {
+			buf.WriteString(sep)
 		}
 	}
 
 	buf.WriteString(close)
-	return buf.String(), err
+	return buf.String()
 }

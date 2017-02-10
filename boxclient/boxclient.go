@@ -8,52 +8,43 @@ import (
 	"io/ioutil"
 	"fmt"
 	"encoding/base64"
+	"log"
 )
 
-const MAX_RESOURCES string = "999999999"
-const DB_FHIR string = "fhir"
+const (
+	MAX_RESOURCES string = "999999999"
+	DB_FHIR string = "fhir"
+)
 
 func execute(cfg *Config) (string, string, error) {
 	var err error
-	var req *http.Request
-	var jsonb []byte
-	var jsons string = ""
-	var message string
+	var jsons string
 
-	req, err = createBoxRequest(cfg)
+	req := createBoxRequest(cfg)
 
-	if err == nil {
-		jsonb, message, err = executeRequest(req)
+	jsonb, message := executeRequest(req)
 
-		if err == nil {
-			jsons = string(jsonb)
-
-			if len(jsons) > 0 {
-				err = checkErrors(cfg, jsons)
-			}
-		}
+	if jsons = string(jsonb); len(jsons) > 0 {
+		err = checkErrors(cfg, jsons)
 	}
 
 	return jsons, message, err
 }
 
-func createBoxRequest(cfg *Config) (*http.Request, error) {
-	var err error
-	var req *http.Request
+func createBoxRequest(cfg *Config) (*http.Request) {
 	var method = strings.ToUpper(cfg.Connection.Method)
-	var url string
-	var auth string
 
-	url, auth, err = getBoxSettings(cfg)
+	url, auth := getBoxSettings(cfg)
+	req, err := http.NewRequest(method, url, nil)
 
-	if err == nil {
-		req, err = http.NewRequest(method, url, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-		if err == nil {
-			req.Header.Add("Content-Type", "application/json")
-			req.Header.Add("Authorization", "Basic " + auth)
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Basic " + auth)
 
-			/*
+	/*
 			var token string
 			token, err = getJwt()
 
@@ -63,13 +54,11 @@ func createBoxRequest(cfg *Config) (*http.Request, error) {
 			}
 			*/
 
-			if method == "POST" || method == "PUT" {
-				req.Header.Add("Accepts", "application/json")
-			}
-		}
+	if method == "POST" || method == "PUT" {
+		req.Header.Add("Accepts", "application/json")
 	}
 
-	return req, err
+	return req
 }
 
 /*
@@ -90,19 +79,18 @@ func getJwt() (string, error) {
 }
 */
 
-func getBoxSettings(cfg *Config) (string, string, error) {
-	var err error
+func getBoxSettings(cfg *Config) (string, string) {
 	var url string
 	var auth string
 	var settings = os.Getenv(fmt.Sprintf("BOX_%s", strings.ToUpper(cfg.Connection.Box)))
 
 	if len(settings) == 0 {
-		err = errors.New(fmt.Sprintf("Box %s not found.", cfg.Connection.Box))
+		log.Fatal(fmt.Sprintf("Box %s not found.", cfg.Connection.Box))
 	} else {
 		var tokens = strings.Split(settings, ";")
 
 		if len(tokens) < 2 {
-			err = errors.New("Invalid box settings")
+			log.Fatal("Invalid box settings")
 		} else {
 			url = fmt.Sprintf("%[1]s/%[2]s/%[3]s", tokens[0], cfg.Connection.Database, cfg.Options.Resource)
 
@@ -116,37 +104,38 @@ func getBoxSettings(cfg *Config) (string, string, error) {
 				url += "_count=" + MAX_RESOURCES
 			}
 
-			auth = getBasicAuthEncoded(tokens[1])
+			auth = base64.StdEncoding.EncodeToString([]byte(tokens[1]))
 		}
 	}
 
-	return url, auth, err
+	return url, auth
 }
 
-func getBasicAuthEncoded (auth string) (string) {
-	return base64.StdEncoding.EncodeToString([]byte(auth))
-}
-
-func executeRequest(req *http.Request) ([]byte, string, error) {
-	var err error
-	var resp *http.Response
+func executeRequest(req *http.Request) ([]byte, string) {
 	var client = &http.Client{}
 	var jsonb []byte
 	var message string
+	var err error
 
-	resp, err = client.Do(req)
+	resp, err := client.Do(req)
 
-	if err == nil {
-		defer resp.Body.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-		if resp.StatusCode >= 400 {
-			message = resp.Status
-		} else {
-			jsonb, err = ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		message = resp.Status
+	} else {
+		jsonb, err = ioutil.ReadAll(resp.Body)
+
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 
-	return jsonb, message, err
+	return jsonb, message
 }
 
 func checkErrors(cfg *Config, js string) error {
@@ -154,14 +143,12 @@ func checkErrors(cfg *Config, js string) error {
 
 	// TODO: Fix for use with $documents
 	if cfg.Connection.Box == "fhir" {
-		var i interface{}
-		i, err = toInterface(js)
+		i := toInterface(js)
 
-		if err == nil {
-			j := i.(map[string]interface{})
-			if msg, ok := j["message"]; ok {
-				err = errors.New(msg.(string))
-			}
+		j := i.(map[string]interface{})
+
+		if msg, ok := j["message"]; ok {
+			err = errors.New(msg.(string))
 		}
 	}
 
