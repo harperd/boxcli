@@ -156,10 +156,8 @@ func isArray(s string) bool {
 	if seq := evalJq(".[]|length", s); len(seq) > 0 {
 		if i, err := strconv.Atoi(string(seq[0])); err != nil {
 			log.Fatal(err)
-		} else {
-			if i > 0 {
-				docArray = true
-			}
+		} else if i > 0 {
+			docArray = true
 		}
 	}
 
