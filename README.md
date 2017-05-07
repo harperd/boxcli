@@ -1,5 +1,5 @@
 # BoxCLI
-Command line interface for Aidbox and FHIR.
+Command line interface for Aidbox and HL7 FHIR.
 
 ##Build
 BoxCLI provides a wrapper for [JQ](https://stedolan.github.io/jq/) to allow filtering of JSON results.

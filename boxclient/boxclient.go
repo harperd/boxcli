@@ -87,12 +87,8 @@ func getBoxSettings(cfg *Config) string {
 
 	if len(settings) == 0 {
 		log.Fatal(fmt.Sprintf("Box %s not found.", cfg.Connection.Box))
-	} else {
-		var tokens = strings.Split(settings, ";")
-
-		if len(tokens) < 2 {
-			log.Fatal("Invalid box settings")
-		}
+	} else if tokens := strings.Split(settings, ";"); len(tokens) < 2 {
+		log.Fatal("Invalid box settings")
 	}
 
 	return settings
@@ -108,14 +104,9 @@ func executeRequest(req *http.Request) ([]byte, string) {
 
 		if resp.StatusCode >= 400 {
 			message = resp.Status
-		} else {
-			var err error
-
-			jsonb, err = ioutil.ReadAll(resp.Body)
-
-			if err != nil {
-				log.Fatal(err)
-			}
+			// jsonb, err = ioutil.ReadAll(resp.Body)
+		} else if jsonb, err = ioutil.ReadAll(resp.Body); err != nil {
+			log.Fatal(err)
 		}
 	} else {
 		log.Fatal(err)
