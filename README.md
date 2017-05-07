@@ -1,7 +1,7 @@
 # BoxCLI
 Command line interface for Aidbox and HL7 FHIR.
 
-##Build
+## Build
 BoxCLI provides a wrapper for [JQ](https://stedolan.github.io/jq/) to allow filtering of JSON results.
 Before building BoxCLI you will need to install [JQ](https://stedolan.github.io/jq/) first.
 
@@ -11,7 +11,7 @@ After installing [JQ](https://stedolan.github.io/jq/) perform the following to b
 $ cd $GOPATH/src/github.com/harperd/boxcli 
 $ go get . && go build -o box
 ```
-##Setup
+##      sSetup
 To use BoxCLI you will need to set an environment variable for each box you want to be able to access. It is recommended to add it to your .bashrc, .profile, .bash_profile, etc.
 BoxCLI environment variables should be all upper case and start with BOX_ followed by the name or alias of the box.
 
@@ -21,7 +21,7 @@ For example, to configure a box alias called mybox for (in this case the same as
 export BOX_MYBOX=http://mybox.aidbox.io
 ```
 
-##Usage
+## Usage
 box [box name] [get|put|post|delete] [doc|fhir] [resource] [options] \<JQ query\>
 
 Options:
